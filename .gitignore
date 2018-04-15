@@ -99,3 +99,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#Personal stuff
+testdoc.txt.asc
+testdoc.txt
