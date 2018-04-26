@@ -6,6 +6,7 @@ import sys
 import curses
 import threading
 import locale
+from pprint import pprint
 # els altres dos scripts necessaris
 # drawer dibuixa els menús i s'ocupa (de moment) del teclat. això és degut
 # a curses, el manager de terminal que estem fent servir.
@@ -22,23 +23,25 @@ class EnigmaPol(object):
             choice = drawer.main_menu(screen)
             if choice == 0:
                 # TODO fer client
-                return;
+                a=1;
             elif choice == 1:
                 # TODO fer servidor
-                return;
+                a=1;
             elif choice == 2:
                 # TODO fer administrador
                 # de moment fa el que vol :(
                 self.gpg_administrator();
-                return;
+                return
             elif choice == 3:
                 sys.exit();
     # el que farà en entrar al administrador de claus
     def gpg_administrator (self):
+
         # aconsegueix una llista de claus
-        list = bash.get_list_pkeys()
+        list = bash.get_list_pkeys_mail()
         # la hauria d'ensenyar. però no ho fa
         drawer.list_pkeys(screen, list)
+        return
 # la primera funció cridada
 # defineix variables glovals a tot el programa
 def setup_enigmapol(stdscr):
@@ -50,13 +53,11 @@ def setup_enigmapol(stdscr):
     # i crida al menú principal. no huríem de fer res a partir d'aquí
     enigmapol.make_choice()
 # truquet per a assegurar-nos que és l'escript principal
-# (asease: que l'usuari a arrencat el programa correcte)
+# (osease: que l'usuari a arrencat el programa correcte)
 if __name__ == "__main__":
     # per al control de menú cridem la funció així. No m'agrada. Però funciona
     curses.wrapper(setup_enigmapol)
     # per a ús purament debuggacional
     bash = Bash()
-    list = bash.get_list_pkeys()
-    for index in range(len(list)):
-        print(list[index])
+    list = bash.get_list_pkeys_mail()
     sys.exit(1);

@@ -54,10 +54,11 @@ class Drawer(object):
     def list_pkeys (self, screen, list):
         screen.clear()
         screen.border()
-        for index in range(len(list)):
-            screen.addstr(int(1+index), int(1), list[index])
-            screen.addstr(1, self.width-10, "why me" + str(index));
-        screen.addstr(1, self.width-10, list);
+        #screen.addstr(1, self.width-10, list);
+        x=0
+        for mail in list:
+            x+=1
+            screen.addstr(1+x,2, mail)
         keyboardinput = -1
         while keyboardinput < 0:
             screen.refresh();
