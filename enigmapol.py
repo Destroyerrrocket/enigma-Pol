@@ -12,36 +12,56 @@ from pprint import pprint
 # a curses, el manager de terminal que estem fent servir.
 from drawer import Drawer
 # Aquest script s'encarrega de les crides a bash. tot made in Pol Marcet :3
+# Disclaimer: si ens posem cisquillosos les llibreries no les he fetes jo XD
 from bash import Bash
 # Aquest és el main script
 class EnigmaPol(object):
     # menú principal. de moment no té massa funcionalitat persé,
     # però anem fent
     def make_choice(self):
-        #perquè hem surt del while? IDK
-        while True:
-            choice = drawer.main_menu(screen)
+        #Mantenim un while per a que no surti de la aplicació sense el meu permís
+        KeepGoing = True
+        while KeepGoing:
+            # dibuixem el menú i esperem que ens digui quina entrada l'usuari escolleix
+            choice = drawer.main_menu(screen)[0]
             if choice == 0:
                 # TODO fer client
-                a=1;
+                aixo_es_perque_no_puc_fer_servir_return = 1;
             elif choice == 1:
                 # TODO fer servidor
-                a=1;
+                # de moment només serveix per a debugar les tecles del teclat.
+                # Que no és algo especialment útil.
+                self.server_administrator()
             elif choice == 2:
                 # TODO fer administrador
-                # de moment fa el que vol :(
+                # Ja comença a agafar forma. Encara queda fèina a fer
+                # Cridem a la part de l'administrador gpg
                 self.gpg_administrator();
-                return
             elif choice == 3:
-                sys.exit();
-    # el que farà en entrar al administrador de claus
+                KeepGoing = False
+    # el que farà en entrar al administrador de Claus
     def gpg_administrator (self):
-
-        # aconsegueix una llista de claus
-        list = bash.get_list_pkeys_mail()
-        # la hauria d'ensenyar. però no ho fa
-        drawer.list_pkeys(screen, list)
-        return
+        # while perquè estem en un menú
+        KeepGoing = True
+        while KeepGoing:
+            # aconsegueix una llista de claus
+            list = bash.get_list_pkeys_mail()
+            # la ensenya. aquesta part és més complexa que l'altre menú.
+            # esquema temporal de funcionalitat:
+            # -> primera columna:
+            #    -> 0: Crear nova clau
+            # -> segona columna:
+            #    -> 0: exit. Per tant trencaríem el loop
+            #    -> 1: enter. fer alguna cosa si estem a 0 en les columnes útils
+            choice = drawer.list_pkeys(screen, list)
+            # Aquesta part està en desenvolupament
+            # Hauria de tornar al menú anterior
+            if choice == [0,0]:
+                return;
+            elif choice == [0,1]:
+                drawer.add_pkey(screen)
+    def server_administrator (self):
+        choice = drawer.keyboardebugger(screen)
 # la primera funció cridada
 # defineix variables glovals a tot el programa
 def setup_enigmapol(stdscr):
