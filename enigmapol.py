@@ -59,7 +59,9 @@ class EnigmaPol(object):
             if choice == [0,0]:
                 return;
             elif choice == [0,1]:
-                drawer.add_pkey(screen)
+                choice2 = drawer.add_pkey(screen)
+                if choice2[0] != "":
+                    bash.create_private_key(choice2[0],choice2[1])
     def server_administrator (self):
         choice = drawer.keyboardebugger(screen)
 # la primera funció cridada
@@ -78,6 +80,7 @@ if __name__ == "__main__":
     # per al control de menú cridem la funció així. No m'agrada. Però funciona
     curses.wrapper(setup_enigmapol)
     # per a ús purament debuggacional
-    bash = Bash()
-    list = bash.get_list_pkeys_mail()
-    sys.exit(1);
+    #bash = Bash()
+    #print(list)
+    #list = bash.get_list_pkeys_name()
+    sys.exit(0);

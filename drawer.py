@@ -16,20 +16,37 @@ class Drawer(object):
         self.height, self.width = screen.getmaxyx()
 
     def screen_window (self, screen, y0, x0, y1, x1):
-        if (isinstance(y0, str)):
-            y0=int(y0.replace("%","",1))
-            y0=int(y0*self.height/100)
-        if (isinstance(y1, str)):
-            y1=int(y1.replace("%","",1))
-            y1=int(y1*self.height/100)
-        if (isinstance(x0, str)):
-            x0=int(x0.replace("%","",1))
-            x0=int(x0*self.width/100)
-        if (isinstance(x1, str)):
-            x1=int(x1.replace("%","",1))
-            x1=int(x1*self.width/100)
-        screen.addstr(y0,x0,str(y0)+","+str(x0))
-        screen.addstr(y1,x1,str(y1)+","+str(x1))
+        y0=self.percentwin(y0, True)
+        y1=self.percentwin(y1, True)
+        x0=self.percentwin(x0, False)
+        x1=self.percentwin(x1, False)
+        # intercambiar les x en cas que x1 sigui més petita que x0
+        if (x0>x1):
+            tempx0=x0
+            x0=x1
+            x1=tempx0
+        # intercambiar les y en cas que y1 sigui més petita que y0
+        if (y0>y1):
+            tempy0=y0
+            y0=y1
+            y1=tempy0
+        numslash=x1-x0
+        slash=""
+        space=""
+        while (numslash>=0):
+            slash+="─"
+            space+=" "
+            numslash -= 1
+        space = space[:-2]
+        screen.addstr(y0,x0,slash)
+        screen.addstr(y1,x0,slash)
+        slash="│"
+        for i in range(y0+1,y1):
+            screen.addstr(i,x0,slash+space+slash)
+        screen.addstr(y0,x0,"┌");
+        screen.addstr(y0,x1,"┐");
+        screen.addstr(y1,x0,"└");
+        screen.addstr(y1,x1,"┘");
         return
 # dibuixa el menú. funciona bé, així que de moment no la tocarem.
     def main_menu(self, screen):
@@ -42,9 +59,10 @@ class Drawer(object):
         # aquest cas també es fan servir arrays. Però no faria falta
         selecteditem = [0,-1];
         selection = [-1,-1];
+        lenghlist = 4
         while selection[0] < 0 and selection[1] < 0:
             #Array de 4
-            selected=[0]*4
+            selected=[0]*lenghlist
             # fem que el botó seleccionat estigui amb el color de fons i de lletra al revés
             selected[selecteditem[0]] = curses.A_REVERSE;
             screen.addstr(int(self.height / 2 - 5), int(self.width / 2 - 8), "Enigma Pol V0.0");
@@ -59,10 +77,10 @@ class Drawer(object):
                 action = screen.getch();
                 if action == curses.KEY_UP:
                     # VISCA LA PROGRAMACIÓ MODULAR!
-                    selecteditem[0] = (selecteditem[0] - 1) % 4;
+                    selecteditem[0] = (selecteditem[0] - 1) % lenghlist;
                 elif action == curses.KEY_DOWN:
                     # VISCA LA PROGRAMACIÓ MODULAR!
-                    selecteditem[0] = (selecteditem[0] + 1) % 4;
+                    selecteditem[0] = (selecteditem[0] + 1) % lenghlist;
                 elif action == ord("\n"):
                     selecteditem[1]=0
                     selection = selecteditem
@@ -88,8 +106,9 @@ class Drawer(object):
             # creixement dinàmic de la taula. No podem tenir la taula vuida
             # afortunadament això no passarà perquè sempre tindrem la entrada
             # de una nova clau
-            selected=[0]*len(list)
-            selected[0]
+            lenghlist = len(list)
+            selected=[0]*lenghlist
+            #selected[0]
             selected[selecteditem[0]] = curses.A_REVERSE;
             x=0
             # posem tots els correus en la pantalla en el bucle for
@@ -103,10 +122,10 @@ class Drawer(object):
                 action = screen.getch();
                 if action == curses.KEY_UP:
                     # VISCA LA PROGRAMACIÓ MODULAR!
-                    selecteditem[0] = (selecteditem[0] - 1) % len(list);
+                    selecteditem[0] = (selecteditem[0] - 1) % lenghlist;
                 elif action == curses.KEY_DOWN:
                     # VISCA LA PROGRAMACIÓ MODULAR!
-                    selecteditem[0] = (selecteditem[0] + 1) % len(list);
+                    selecteditem[0] = (selecteditem[0] + 1) % lenghlist;
                 elif action == ord("q") or action == curses.KEY_EXIT:
                     # sortir de la pantalla
                     selecteditem[1]=0
@@ -121,9 +140,65 @@ class Drawer(object):
         return selection;
     # en desenvolupament
     def add_pkey (self, screen):
-        self.screen_window(screen, "20%", "10%", "80%", "80%")
-        screen.addstr(18,18, "why me")
-        screen.refresh()
+        lenghlist = 2
+        selecteditem = [0,-1];
+        selection = [-1, -1];
+        valuesgiven=[""]*lenghlist
+        valueskeysize=["1024","2048","4096"]
+        valueskeysizeselected = 2
+        # la comfirmació es fa en les dos columnes de dades
+        while selection[0] < 0 and selection[1] < 0:
+            self.screen_window(screen, "30%", "10%", "70%", "80%")
+            selected=[0]*lenghlist
+
+            selected[selecteditem[0]] = curses.A_REVERSE;
+            screen.addstr(self.percentwin("30%", True)+3,self.percentwin("10%", False)+1, "Tamany de la clau: "+"<"+valueskeysize[valueskeysizeselected]+">", selected[1])
+            screen.addstr(self.percentwin("30%", True)+1,self.percentwin("10%", False)+1, "Nom: "+valuesgiven[0], selected[0])
+            # refresquem la pantalla
+            screen.refresh()
+            try:
+                # moure el cursor e iterar
+                action = screen.getch();
+                if action == curses.KEY_UP:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    selecteditem[0] = (selecteditem[0] - 1) % lenghlist;
+                elif action == curses.KEY_DOWN:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    selecteditem[0] = (selecteditem[0] + 1) % lenghlist;
+                elif action== curses.KEY_RIGHT:
+                    if selecteditem[0]==1:
+                        valueskeysizeselected = (valueskeysizeselected+1) % len(valueskeysize)
+                elif action== curses.KEY_LEFT:
+                    if selecteditem[0]==1:
+                        valueskeysizeselected = (valueskeysizeselected-1) % len(valueskeysize)
+                elif action == curses.KEY_EXIT or action == ord("\n"):
+                    # sortir de la pantalla
+                    selecteditem[1]=0
+                    valuesgiven[1]=valueskeysize[valueskeysizeselected]
+                    selection = selecteditem
+                    # entrar en opció del menú
+                    selecteditem[1]=1
+                    selection = selecteditem
+                elif action == 127:
+                    if selecteditem[0]==0:
+                        valuesgiven[0]=valuesgiven[0][:-1]
+                else:
+                    if selecteditem[0]==0:
+                        valuesgiven[0]+=chr(action)
+
+            # si decideix sortir de forma prematura
+            except KeyboardInterrupt:
+                sys.exit()
+        return valuesgiven;
+
+    def percentwin (self, percent, is_y):
+        if (isinstance(percent, str)):
+            percent=int(percent.replace("%","",1))
+            if (is_y):
+                percent=int(percent*self.height/100)
+            else:
+                percent=int(percent*self.width/100)
+        return percent
     # útil per a saber el valor numèric de les tecles del teclat.
     # imprimeix en pantalla el resultat
     def keyboardebugger (self, screen):
