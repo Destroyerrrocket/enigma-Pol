@@ -26,7 +26,7 @@ class EnigmaPol(object):
             choice = drawer.main_menu(screen)[0]
             if choice == 0:
                 # TODO fer client
-                aixo_es_perque_no_puc_fer_servir_return = 1;
+                self.client_administrator()
             elif choice == 1:
                 # TODO fer servidor
                 # de moment només serveix per a debugar les tecles del teclat.
@@ -64,10 +64,16 @@ class EnigmaPol(object):
                     bash.create_private_key(choice2[0],choice2[1])
     def server_administrator (self):
         choice = drawer.keyboardebugger(screen)
+    def client_administrator (self):
+        choice = drawer.colordebugger(screen)
 # la primera funció cridada
 # defineix variables glovals a tot el programa
 def setup_enigmapol(stdscr):
     global drawer, screen, bash
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
     screen = stdscr
     enigmapol = EnigmaPol()
     bash = Bash()
