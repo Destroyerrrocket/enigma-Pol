@@ -1,4 +1,5 @@
 #!/bin/sh
+
 cat testdoc.txt | gpg -ea -vv -R polmarcetsarda@gmail.com > testdoc.txt.asc
 cat testdoc.txt.asc | gpg -d -vv > testdoc.txt
 cat > template <<EOF
