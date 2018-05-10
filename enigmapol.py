@@ -45,7 +45,9 @@ class EnigmaPol(object):
         KeepGoing = True
         while KeepGoing:
             # aconsegueix una llista de claus
-            list = bash.get_list_pkeys_mail()
+            list1 = bash.get_list_prkeys_mail()
+            list2 = bash.get_list_pukeys_mail()
+            finalist=[list1,list2]
             # la ensenya. aquesta part és més complexa que l'altre menú.
             # esquema temporal de funcionalitat:
             # -> primera columna:
@@ -53,10 +55,10 @@ class EnigmaPol(object):
             # -> segona columna:
             #    -> 0: exit. Per tant trencaríem el loop
             #    -> 1: enter. fer alguna cosa si estem a 0 en les columnes útils
-            choice = drawer.list_pkeys(screen, list)
+            choice = drawer.list_pkeys(screen, finalist)
             # Aquesta part està en desenvolupament
             # Hauria de tornar al menú anterior
-            if choice == [0,0]:
+            if choice[1] == 0:
                 return;
             elif choice == [0,1]:
                 choice2 = drawer.add_pkey(screen)

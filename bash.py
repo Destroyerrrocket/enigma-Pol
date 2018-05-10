@@ -25,7 +25,7 @@ class Bash(object):
         self.gpg = gnupg.GPG(gnupghome=self.Dir)
         self.gpg.encoding = 'utf-8'
     # ja funciona. LLista totes les claus del directori
-    def get_list_pkeys_mail (self):
+    def get_list_prkeys_mail (self):
         # definim la carpeta arrel. S'ha decidit usar una pròpia.
         keys = self.gpg.list_keys(True)
         # variable que contindrà els mails
@@ -34,20 +34,27 @@ class Bash(object):
         for i in range(0, len(keys)):
             mailparsed = self.get_mails_on_text(str(keys[i]["uids"]))
             mail.append(mailparsed)
-        pprint(mail)
+        return mail
+    def get_list_pukeys_mail (self):
+        # definim la carpeta arrel. S'ha decidit usar una pròpia.
+        keys = self.gpg.list_keys(False)
+        # variable que contindrà els mails
+        mail = []
+        # màgia iterativa per a aconseguir els mails
+        for i in range(0, len(keys)):
+            mailparsed = self.get_mails_on_text(str(keys[i]["uids"]))
+            mail.append(mailparsed)
         return mail
     def get_list_pkeys_name (self):
         # definim la carpeta arrel. S'ha decidit usar una pròpia.
 
         keys = self.gpg.list_keys(True)
-        pprint(keys)
         # variable que contindrà els mails
         name = []
         # màgia iterativa per a aconseguir els mails
         for i in range(0, len(keys)):
             nameparsed = self.get_names_on_text(str(keys[i]["uids"]))
             name.append(nameparsed)
-        pprint(name)
         return name
     # Aquesta part conté la màgia iterativa.
     def get_names_on_text (self, text):

@@ -19,11 +19,9 @@ class Drawer(object):
     def main_menu(self, screen):
         screen.clear();
         text_of_the_menu=["Enigma Pol V0.0", "Connectar amb un Servidor", "Crear un Servidor", "Configurar Claus", "Sortir"]
-        self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(19)+curses.A_REVERSE);
-        self.screen_window(screen,2000,2000,2003,2003)
+        self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE);
         sizeinx=int(len(max(text_of_the_menu, key=len))/2)
         self.screen_window(screen,"~5","~"+str(sizeinx+2),"~5","~"+str(sizeinx+2),curses.color_pair(8)+curses.A_REVERSE);
-        screen.addstr(2,2,str(sizeinx))
         checkvar1 = curses.has_colors()
         checkvar2 = curses.can_change_color()
         # aquesta part defineix el botó seleccionat de forma predeterminada
@@ -63,39 +61,84 @@ class Drawer(object):
                 sys.exit()
         # i retornem el resultat
         return selection
-    # estic cansat i això és un caos. revisar i refactoritzar. :(
-    def list_pkeys (self, screen, list):
+    def list_pkeys (self, screen, listall):
+        # borrem la pantalla
         screen.clear()
+        # el títol del menú 1
         titol1="Claus Privades:"
-        self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(19)+curses.A_REVERSE);
-        self.screen_window(screen,1,1, 5+len(list), 4+len(titol1),curses.color_pair(8)+curses.A_REVERSE);
-        self.screen_window(screen,"90%","~40%","+3","~40%",curses.color_pair(8)+curses.A_REVERSE);
-
+        # el títol del menú 2
+        titol2="Claus Públiques:"
+        # el text de les instruccions
+        text_of_controls="[R]: Borrar, [E]: Exportar, [I] Importar"
+        # en cas de que el menú 2 no tingui res, afegirem una variable per tal de que no exploti
+        if len(listall[1])<1:
+            listall[1][0]="--Buit--"
+        # sizeinx=valors per a calcular distàncies de dibuix en la x, les poso a part per a fer el codi més llegible
+        # aquí calculem el tamany de la finestra 1 per tal que el text no se surti del rectangle
+        sizeinx=int(len(max(listall[0], key=len)))
+        # rectangle blau que serà el fons.
+        self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE);
+        # crea la finestra 1, del tamany relatiu al nombre de claus
+        self.screen_window(screen,1,1, 5+len(listall[0]), sizeinx+4,curses.color_pair(8)+curses.A_REVERSE);
+        # calculem el tamany de la finestra 2 per tal que el text no es surti
+        sizeinx2=int(len(max(listall[1], key=len)))
+        # crea la finestra 2
+        self.screen_window(screen,1, sizeinx+7, 4+len(listall[1]), sizeinx2+sizeinx+7+1,curses.color_pair(8)+curses.A_REVERSE);
+        # crea la finestra 3. Aquesta és la de les instruccions per al gestor
+        self.screen_window(screen,self.height-8,"~40%","+4","~40%",curses.color_pair(8)+curses.A_REVERSE);
+        # calcular el """"centre"""" per al text de les instruccions. És modular així que no tindré que cambiar-ho
+        sizeinx=int(self.width / 2 - (len(text_of_controls)/2))
+        # Posem el titol i el text de les instruccions
+        screen.addstr(self.height-8,self.percentwin("10%",False)+2,"Instruccions: ",curses.A_REVERSE+curses.color_pair(8))
+        screen.addstr(self.height-6,sizeinx,text_of_controls,curses.A_REVERSE+curses.color_pair(8))
+        # titol de la finestra 1
         screen.addstr(1,3, titol1, curses.A_REVERSE+curses.color_pair(8))
         # entrada per a crear claus
-        list.append("++Nova Clau++")
+        listall[0].append("++Nova Clau++")
         # la posarem a 0 girant tota la taula. Per a l'usuari sempre serà
         # l'ordre avitual perquè després les noves claus apareixeràn just a sota
-        list.reverse()
+        listall[0].reverse()
+        listall[1].reverse()
         # nou esquema per a fer anar el sistema de selecció. Ara requereix d'arrays
         selecteditem = [0,-1];
         selection = [-1, -1];
+        in_table=0
         # la comfirmació es fa en les dos columnes de dades
         while selection[0] < 0 and selection[1] < 0:
             # creixement dinàmic de la taula. No podem tenir la taula vuida
             # afortunadament això no passarà perquè sempre tindrem la entrada
-            # de una nova clau
-            lenghlist = len(list)
-            selected=[curses.A_REVERSE+curses.color_pair(8)]*lenghlist
+            # de una nova clau i la de que està buida. Podriem integrar un
+            # comprobador, però llavors les finestres també estarien
+            # desorientades. El món té sentit així
+            lenghlist1 = len(listall[0])
+            lenghlist2 = len(listall[1])
+            selected1=[curses.A_REVERSE+curses.color_pair(8)]*lenghlist1
+            selected2=[curses.A_REVERSE+curses.color_pair(8)]*lenghlist2
+            selected=[selected1,selected2]
+            # aquí, tenint en compte en quina finestra estem, determinarà
+            # quina clau està seleccionada.
+            if in_table==0:
+                lenghlist = lenghlist1
+                selected1[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204);
+            elif in_table==1:
+                lenghlist = lenghlist2
+                selected2[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204);
             #selected[0]
-            selected[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204);
             x=0
             # posem tots els correus en la pantalla en el bucle for
-            for mail in list:
-                screen.addstr(3+x,3, mail, selected[x])
+            for mail in listall[0]:
+                screen.addstr(3+x,3, mail, selected1[x])
+                x+=1
+            # calculem la llargada de la finestra 1. per fer-ho cal tenir en compte el mail més llarg
+            sizeinx=int(len(max(listall[0], key=len)))
+            x=0
+            # posem tots els correus en la pantalla en el bucle for
+            for mail in listall[1]:
+                screen.addstr(3+x,sizeinx+8, mail, selected2[x])
                 x+=1
             # refresquem la pantalla
             screen.refresh()
+            # SECCIÓ D'INTERACCIÓ DE L'USUARI
             try:
                 # moure el cursor e iterar
                 action = screen.getch();
@@ -105,6 +148,12 @@ class Drawer(object):
                 elif action == curses.KEY_DOWN:
                     # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] + 1) % lenghlist;
+                elif action == curses.KEY_LEFT:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    in_table = (in_table - 1) % 2
+                elif action == curses.KEY_RIGHT:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    in_table = (in_table + 1) % 2
                 elif action == ord("q") or action == curses.KEY_EXIT:
                     # sortir de la pantalla
                     selecteditem[1]=0
@@ -119,22 +168,32 @@ class Drawer(object):
         return selection;
     # en desenvolupament
     def add_pkey (self, screen):
+        # declarem moltes variables. moltes són prou autoexplicatives
         lenghlist = 2
         selecteditem = [0,-1];
         selection = [-1, -1];
         valuesgiven=[""]*lenghlist
+        # bits que axceptaré. No confio en que l'usuari els possi bé
         valueskeysize=["1024","2048","4096"]
         valueskeysizeselected = 2
         # la comfirmació es fa en les dos columnes de dades
         while selection[0] < 0 and selection[1] < 0:
-            self.screen_window(screen, "~5", "~15", "~5", "~15")
-            selected=[0]*lenghlist
-
-            selected[selecteditem[0]] = curses.A_REVERSE;
+            # crearem una finestra. Està dintre del bucle per a evitar que quan
+            # l'usuari borri les lletres es quedin en pantalla. No vull que es
+            # pensin que el programa està trencat :)
+            self.screen_window(screen, "~5", "~15", "~5", "~15",curses.A_REVERSE+curses.color_pair(8))
+            # la opció seleccionada
+            selected=[curses.A_REVERSE+curses.color_pair(8)]*(lenghlist+1)
+            selected[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204)
+            # creem les opcions del menú. Titol, opció 2 i opció 1. Aquest ordre
+            # és per a donar a l'usuari la il·lució que el cursor està en el que
+            # estàn escribint. No afecta massa el codi i prefereixo que quedi bonic
+            screen.addstr(self.percentwin("50%", True)-6,self.percentwin("50%", False)-14, "Crear nova clau privada: ", selected[2])
             screen.addstr(self.percentwin("50%", True)+3,self.percentwin("50%", False)-14, "Tamany de la clau: "+"<"+valueskeysize[valueskeysizeselected]+">", selected[1])
             screen.addstr(self.percentwin("50%", True),self.percentwin("50%", False)-14, "Nom: "+valuesgiven[0], selected[0])
             # refresquem la pantalla
             screen.refresh()
+            # PART D'INTERACCIÓ
             try:
                 # moure el cursor e iterar
                 action = screen.getch();
@@ -151,16 +210,14 @@ class Drawer(object):
                     if selecteditem[0]==1:
                         valueskeysizeselected = (valueskeysizeselected-1) % len(valueskeysize)
                 elif action == curses.KEY_EXIT or action == ord("\n") or action == 27:
-                    # sortir de la pantalla
-                    selecteditem[1]=0
+                    # simplement li diem el tamany de la clau i li diem que ja hem cabat al incomplir el while
                     valuesgiven[1]=valueskeysize[valueskeysizeselected]
                     selection = selecteditem
-                    # entrar en opció del menú
-                    selecteditem[1]=1
-                    selection = selecteditem
+                # borrar un caràcter del text del nom.
                 elif action == 127:
                     if selecteditem[0]==0:
                         valuesgiven[0]=valuesgiven[0][:-1]
+                # Aquí assignem la tecla al text del nom.
                 else:
                     if selecteditem[0]==0:
                         valuesgiven[0]+=chr(action)
@@ -169,52 +226,6 @@ class Drawer(object):
             except KeyboardInterrupt:
                 sys.exit()
         return valuesgiven;
-    def complexwin (self, i0, i1, is_y):
-        if (isinstance(i0,str)):
-            if "~" in i0:
-                i0=i0.replace("~","",1)
-                i0=self.percentwin("50%", is_y)-int(self.percentwin(i0, is_y))-1
-            else:
-                i0=self.percentwin(i0, is_y)
-            i0=int(i0)
-        if (isinstance(i1,str)):
-            if "+" in i1:
-                i1=i1.replace("+","",1)
-                add=i0
-            else:
-                add=0
-            if "~" in i1:
-                i1=i1.replace("~","",1)
-                i1=self.percentwin("50%", is_y)+int(self.percentwin(i1, is_y))
-            else:
-                i1=self.percentwin(i1, is_y)
-            i1=int(i1)
-            i1=i1+add
-        if i0<0:
-            i1-=(i0)
-            i0-=(i0)
-        a=0
-        if is_y:
-            a=self.height
-            if i1>a:
-                i0-=(i1-a)+2
-                i1-=(i1-a)+2
-        else:
-            a=self.width
-            if i1>a:
-                i0-=(i1-a)+1
-                i1-=(i1-a)+1
-        return i0, i1
-
-    def percentwin (self, percent, is_y):
-        if isinstance(percent, str):
-            if "%" in percent :
-                percent=int(percent.replace("%","",1))
-                if (is_y):
-                    percent=int(percent*self.height/100)
-                else:
-                    percent=int(percent*self.width/100)
-        return percent
     # útil per a saber el valor numèric de les tecles del teclat.
     # imprimeix en pantalla el resultat
     def keyboardebugger (self, screen):
@@ -245,6 +256,7 @@ class Drawer(object):
         # i retornem el resultat
         return selection
     def colordebugger (self,screen):
+        # Aquest programa està pensat per a funcionar sota condicions especifiques. no hem mereix la pena comentar-lo
         checkvar1 = curses.has_colors()
         checkvar2 = curses.can_change_color()
         COLOR_NOW=curses.COLOR_PAIRS
@@ -252,7 +264,7 @@ class Drawer(object):
         a=True
         while a :
             screen.clear();
-            self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(19)+curses.A_REVERSE);
+            self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE);
             screen.addstr(2,2,str(checkvar1))
             screen.addstr(3,2,str(checkvar2))
             screen.addstr(4,2,str(curses.COLORS))
@@ -273,15 +285,24 @@ class Drawer(object):
                 elif action == curses.KEY_DOWN:
                     startwhitha0 = (startwhitha0 + 32) % COLOR_NOW;
                 elif action== curses.KEY_RIGHT:
-                    startwhitha0 = (startwhitha0 - 256) % COLOR_NOW;
-                elif action== curses.KEY_LEFT:
                     startwhitha0 = (startwhitha0 + 256) % COLOR_NOW;
+                elif action== curses.KEY_LEFT:
+                    startwhitha0 = (startwhitha0 - 256) % COLOR_NOW;
             # si decideix sortir de forma prematura
             except KeyboardInterrupt:
                 sys.exit()
     def screen_window (self, screen, y0, x0, y1, x1, data=0):
+        # he creat un sistema més complexe per a fer les transformacions.
+        # admet, com a str, "+", "~", "%" | que el que fan és:
+        # sumar | restar/sumar al 50% | transformar un % en un valor útil.
+        # es poden combinar, però fes-ho amb seny.
+        # també té un sistema de seguretat per a evitar fer finestres fora de la
+        # pantalla, però està en desenvolupament i falla, així que no hem siguis
+        # bago i programa bé
         y0, y1 = self.complexwin(y0,y1, True)
         x0, x1 = self.complexwin(x0,x1, False)
+        # per si el programador que hem fa servir es dona un cop fort al cap,
+        # millor ser nosaltres els intel·ligents
         # intercambiar les x en cas que x1 sigui més petita que x0
         if (x0>x1):
             tempx0=x0
@@ -292,21 +313,77 @@ class Drawer(object):
             tempy0=y0
             y0=y1
             y1=tempy0
+        # número de "-" de la barra de adalt
         numslash=x1-x0
         slash=""
         space=""
+        # calculem els caracters a usar
         while (numslash>=0):
             slash+="─"
             space+=" "
             numslash -= 1
+        # restem 2 als espais perquè hi ha un borde de 1 a cada vanda "|"
         space = space[:-2]
+        # primer la linia de dalt i abaix
         screen.addstr(y0,x0,slash,data)
         screen.addstr(y1,x0,slash,data)
         slash="│"
+        #la resta de linies
         for i in range(y0+1,y1):
             screen.addstr(i,x0,slash+space+slash,data)
+        # fem les cantonades. per si en un futur vull facilitarme la feina
         screen.addstr(y0,x0,"┌",data);
         screen.addstr(y0,x1,"┐",data);
         screen.addstr(y1,x0,"└",data);
         screen.addstr(y1,x1,"┘",data);
         return
+    def complexwin (self, i0, i1, is_y):
+        # moltes operacions matematiques. És una funció interna.
+        # No es toca si segueix funcionant
+        add=0
+        if (isinstance(i0,str)):
+            if "~" in i0:
+                i0=i0.replace("~","",1)
+                i0=self.percentwin("50%", is_y)-int(self.percentwin(i0, is_y))-1
+            else:
+                i0=self.percentwin(i0, is_y)
+                i0=int(i0)
+        if (isinstance(i1,str)):
+            if "+" in i1:
+                i1=i1.replace("+","",1)
+                add=i0
+            if "~" in i1:
+                i1=i1.replace("~","",1)
+                i1=self.percentwin("50%", is_y)+int(self.percentwin(i1, is_y))
+            else:
+                i1=self.percentwin(i1, is_y)
+        i1=int(i1)
+        i1=i1+add
+        if i0<0:
+            i1-=(i0)
+            i0-=(i0)
+        a=0
+        if is_y:
+            a=self.height
+        else:
+            a=self.width
+        if is_y:
+            if i1>a:
+                i0-=(i1-a)+2
+                i1-=(i1-a)+2
+        else:
+            if i1>a:
+                i0-=(i1-a)+1
+                i1-=(i1-a)+1
+        return i0, i1
+    def percentwin (self, percent, is_y):
+        # moltes operacions matematiques. És una funció interna.
+        # No es toca si segueix funcionant
+        if isinstance(percent, str):
+            if "%" in percent :
+                percent=int(percent.replace("%","",1))
+                if (is_y):
+                    percent=int(percent*self.height/100)
+                else:
+                    percent=int(percent*self.width/100)
+        return percent
