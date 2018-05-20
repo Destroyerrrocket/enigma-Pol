@@ -30,9 +30,9 @@ class Drawer(object):
         # per a mantenir uns retorns de dades cànon amb el programa, per a
         # aquest cas també es fan servir arrays. Però no faria falta
         selecteditem = [0,-1];
-        selection = [-1,-1];
+        selection = [-1,-1, -1];
         lenghlist = 4
-        while selection[0] < 0 and selection[1] < 0:
+        while max(selection) < 0:
             #Array de 4
             selected=[curses.A_REVERSE+curses.color_pair(8)]*lenghlist
             # fem que el botó seleccionat estigui amb el color de fons i de lletra al revés
@@ -73,38 +73,42 @@ class Drawer(object):
         # en cas de que el menú 2 no tingui res, afegirem una variable per tal de que no exploti
         if len(listall[1])<1:
             listall[1][0]="--Buit--"
-        # sizeinx=valors per a calcular distàncies de dibuix en la x, les poso a part per a fer el codi més llegible
-        # aquí calculem el tamany de la finestra 1 per tal que el text no se surti del rectangle
-        sizeinx=int(len(max(listall[0], key=len)))
-        # rectangle blau que serà el fons.
-        self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE);
-        # crea la finestra 1, del tamany relatiu al nombre de claus
-        self.screen_window(screen,1,1, 5+len(listall[0]), sizeinx+4,curses.color_pair(8)+curses.A_REVERSE);
-        # calculem el tamany de la finestra 2 per tal que el text no es surti
-        sizeinx2=int(len(max(listall[1], key=len)))
-        # crea la finestra 2
-        self.screen_window(screen,1, sizeinx+7, 4+len(listall[1]), sizeinx2+sizeinx+7+1,curses.color_pair(8)+curses.A_REVERSE);
-        # crea la finestra 3. Aquesta és la de les instruccions per al gestor
-        self.screen_window(screen,self.height-8,"~40%","+4","~40%",curses.color_pair(8)+curses.A_REVERSE);
-        # calcular el """"centre"""" per al text de les instruccions. És modular així que no tindré que cambiar-ho
-        sizeinx=int(self.width / 2 - (len(text_of_controls)/2))
-        # Posem el titol i el text de les instruccions
-        screen.addstr(self.height-8,self.percentwin("10%",False)+2,"Instruccions: ",curses.A_REVERSE+curses.color_pair(8))
-        screen.addstr(self.height-6,sizeinx,text_of_controls,curses.A_REVERSE+curses.color_pair(8))
-        # titol de la finestra 1
-        screen.addstr(1,3, titol1, curses.A_REVERSE+curses.color_pair(8))
+
         # entrada per a crear claus
         listall[0].append("++Nova Clau++")
         # la posarem a 0 girant tota la taula. Per a l'usuari sempre serà
         # l'ordre avitual perquè després les noves claus apareixeràn just a sota
         listall[0].reverse()
         listall[1].reverse()
+        # sizeinx=valors per a calcular distàncies de dibuix en la x, les poso a part per a fer el codi més llegible
+        # aquí calculem el tamany de la finestra 1 per tal que el text no se surti del rectangle
+        sizeinx=int(len(max(listall[0], key=len)))
+        # rectangle blau que serà el fons.
+        self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE);
+        # crea la finestra 1, del tamany relatiu al nombre de claus
+        self.screen_window(screen,1,1, 4+len(listall[0]), sizeinx+4,curses.color_pair(8)+curses.A_REVERSE);
+        # calculem el tamany de la finestra 2 per tal que el text no es surti
+        sizeinx2=int(len(max(listall[1], key=len)))
+        if sizeinx2 < 15:
+            sizeinx2=15
+        # crea la finestra 2
+        self.screen_window(screen,1, sizeinx+7, 4+len(listall[1]), sizeinx2+sizeinx+7+3,curses.color_pair(8)+curses.A_REVERSE);
+        # crea la finestra 3. Aquesta és la de les instruccions per al gestor
+        self.screen_window(screen,self.height-8,"~40%","+4","~40%",curses.color_pair(8)+curses.A_REVERSE);
+        # calcular el """"centre"""" per al text de les instruccions. És modular així que no tindré que cambiar-ho
+        sizeinx3=int(self.width / 2 - (len(text_of_controls)/2))
+        # Posem el titol i el text de les instruccions
+        screen.addstr(self.height-8,self.percentwin("10%",False)+2,"Instruccions: ",curses.A_REVERSE+curses.color_pair(8))
+        screen.addstr(self.height-6,sizeinx3,text_of_controls,curses.A_REVERSE+curses.color_pair(8))
+        # titol de la finestra 1
+        screen.addstr(1,2, titol1, curses.A_REVERSE+curses.color_pair(8))
+        screen.addstr(1,2+sizeinx+6, titol2, curses.A_REVERSE+curses.color_pair(8))
+
         # nou esquema per a fer anar el sistema de selecció. Ara requereix d'arrays
-        selecteditem = [0,-1];
-        selection = [-1, -1];
-        in_table=0
+        selecteditem = [0, 0,-1];
+        selection = [-1, -1, -1];
         # la comfirmació es fa en les dos columnes de dades
-        while selection[0] < 0 and selection[1] < 0:
+        while max(selection) < 0:
             # creixement dinàmic de la taula. No podem tenir la taula vuida
             # afortunadament això no passarà perquè sempre tindrem la entrada
             # de una nova clau i la de que està buida. Podriem integrar un
@@ -117,10 +121,10 @@ class Drawer(object):
             selected=[selected1,selected2]
             # aquí, tenint en compte en quina finestra estem, determinarà
             # quina clau està seleccionada.
-            if in_table==0:
+            if selecteditem[1]==0:
                 lenghlist = lenghlist1
                 selected1[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204);
-            elif in_table==1:
+            elif selecteditem[1]==1:
                 lenghlist = lenghlist2
                 selected2[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204);
             #selected[0]
@@ -134,7 +138,7 @@ class Drawer(object):
             x=0
             # posem tots els correus en la pantalla en el bucle for
             for mail in listall[1]:
-                screen.addstr(3+x,sizeinx+8, mail, selected2[x])
+                screen.addstr(3+x,sizeinx+9, mail, selected2[x])
                 x+=1
             # refresquem la pantalla
             screen.refresh()
@@ -150,17 +154,26 @@ class Drawer(object):
                     selecteditem[0] = (selecteditem[0] + 1) % lenghlist;
                 elif action == curses.KEY_LEFT:
                     # VISCA LA PROGRAMACIÓ MODULAR!
-                    in_table = (in_table - 1) % 2
+                    selecteditem[1] = (selecteditem[1] - 1) % 2
+                    if selecteditem[0] > len(listall[selecteditem[1]])-1:
+                        selecteditem[0] = len(listall[selecteditem[1]])-1
                 elif action == curses.KEY_RIGHT:
                     # VISCA LA PROGRAMACIÓ MODULAR!
-                    in_table = (in_table + 1) % 2
+                    selecteditem[1] = (selecteditem[1] + 1) % 2
+
+                    if selecteditem[0] > len(listall[selecteditem[1]])-1:
+                        selecteditem[0] = len(listall[selecteditem[1]])-1
                 elif action == ord("q") or action == curses.KEY_EXIT:
                     # sortir de la pantalla
-                    selecteditem[1]=0
+                    selecteditem[2]=0
                     selection = selecteditem
                 elif action == ord("\n"):
                     # entrar en opció del menú
-                    selecteditem[1]=1
+                    selecteditem[2]=1
+                    selection = selecteditem
+                elif action == ord("r"):
+                    # entrar en opció del menú
+                    selecteditem[2]=2
                     selection = selecteditem
             # si decideix sortir de forma prematura
             except KeyboardInterrupt:
@@ -171,13 +184,13 @@ class Drawer(object):
         # declarem moltes variables. moltes són prou autoexplicatives
         lenghlist = 2
         selecteditem = [0,-1];
-        selection = [-1, -1];
+        selection = [-1, -1, -1];
         valuesgiven=[""]*lenghlist
         # bits que axceptaré. No confio en que l'usuari els possi bé
         valueskeysize=["1024","2048","4096"]
         valueskeysizeselected = 2
         # la comfirmació es fa en les dos columnes de dades
-        while selection[0] < 0 and selection[1] < 0:
+        while max(selection) < 0:
             # crearem una finestra. Està dintre del bucle per a evitar que quan
             # l'usuari borri les lletres es quedin en pantalla. No vull que es
             # pensin que el programa està trencat :)

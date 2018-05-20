@@ -43,27 +43,45 @@ class EnigmaPol(object):
     def gpg_administrator (self):
         # while perquè estem en un menú
         KeepGoing = True
-        while KeepGoing:
+        while True:
             # aconsegueix una llista de claus
-            list1 = bash.get_list_prkeys_mail()
-            list2 = bash.get_list_pukeys_mail()
+            is_list_empty=[False,False]
+            list1 = bash.get_list_prkeys_name()
+            list2 = bash.get_list_pukeys_name()
+            if len(list2)<1:
+                list2.append("--Buit--")
+                is_list_empty[1]=True
             finalist=[list1,list2]
             # la ensenya. aquesta part és més complexa que l'altre menú.
             # esquema temporal de funcionalitat:
             # -> primera columna:
-            #    -> 0: Crear nova clau
+            #    -> fila en la que estem
             # -> segona columna:
+            #    -> columna en la que estem
+            # -> segona columna:
+            #    -> acció que es farà. correspon amb un botó
             #    -> 0: exit. Per tant trencaríem el loop
             #    -> 1: enter. fer alguna cosa si estem a 0 en les columnes útils
+            #    -> 2: R. borrar la clau. Anem a veure com surt això
             choice = drawer.list_pkeys(screen, finalist)
             # Aquesta part està en desenvolupament
             # Hauria de tornar al menú anterior
-            if choice[1] == 0:
+            if choice[2] == 0:
                 return;
-            elif choice == [0,1]:
+            elif choice == [0,0,1]:
                 choice2 = drawer.add_pkey(screen)
                 if choice2[0] != "":
                     bash.create_private_key(choice2[0],choice2[1])
+            else:
+                # per tal de que les id's de les claus coincideixin, ja que sinó
+                #són una més del compte per culpa de l'opció "nova clau"
+                choice[0]-=1
+            if choice[2] == 2:
+                if choice[1]==1 and is_list_empty[1]==False:
+                    bash.remove_pukey(id=choice[0])
+                elif choice[1]==0 and is_list_empty[1]==False:
+                    bash.remove_prkey(id=choice[0])
+
     def server_administrator (self):
         choice = drawer.keyboardebugger(screen)
     def client_administrator (self):
@@ -85,10 +103,8 @@ def setup_enigmapol(stdscr):
 # truquet per a assegurar-nos que és l'escript principal
 # (osease: que l'usuari a arrencat el programa correcte)
 if __name__ == "__main__":
-    # per al control de menú cridem la funció així. No m'agrada. Però funciona
+    # per al control de menú cridem la funció així. inicialitza la finestra de curses
     curses.wrapper(setup_enigmapol)
+    Bash.remove_prkey(id=1)
     # per a ús purament debuggacional
-    #bash = Bash()
-    #print(list)
-    #list = bash.get_list_pkeys_name()
     sys.exit(0);

@@ -22,11 +22,12 @@ class Bash(object):
         # crearem el directori. GnuPG m'ha donat problemes si no la creem personalment
         if(not os.path.exists(self.Dir)):
             os.makedirs(self.Dir)
+            subprocess.Popen(str("chmod 700 "+self.Dir).split())
+            subprocess.Popen(str("chmod 600 "+self.Dir+"/*").split())
         self.gpg = gnupg.GPG(gnupghome=self.Dir)
         self.gpg.encoding = 'utf-8'
     # ja funciona. LLista totes les claus del directori
     def get_list_prkeys_mail (self):
-        # definim la carpeta arrel. S'ha decidit usar una pròpia.
         keys = self.gpg.list_keys(True)
         # variable que contindrà els mails
         mail = []
@@ -36,7 +37,6 @@ class Bash(object):
             mail.append(mailparsed)
         return mail
     def get_list_pukeys_mail (self):
-        # definim la carpeta arrel. S'ha decidit usar una pròpia.
         keys = self.gpg.list_keys(False)
         # variable que contindrà els mails
         mail = []
@@ -45,9 +45,7 @@ class Bash(object):
             mailparsed = self.get_mails_on_text(str(keys[i]["uids"]))
             mail.append(mailparsed)
         return mail
-    def get_list_pkeys_name (self):
-        # definim la carpeta arrel. S'ha decidit usar una pròpia.
-
+    def get_list_prkeys_name (self):
         keys = self.gpg.list_keys(True)
         # variable que contindrà els mails
         name = []
@@ -56,10 +54,46 @@ class Bash(object):
             nameparsed = self.get_names_on_text(str(keys[i]["uids"]))
             name.append(nameparsed)
         return name
+    def get_list_pukeys_name (self):
+        keys = self.gpg.list_keys()
+        # variable que contindrà els mails
+        name = []
+        # màgia iterativa per a aconseguir els mails
+        for i in range(0, len(keys)):
+            nameparsed = self.get_names_on_text(str(keys[i]["uids"]))
+            name.append(nameparsed)
+        return name
+    def get_list_prkeys_fingerprint (self):
+        keys = self.gpg.list_keys(True)
+        # variable que contindrà els mails
+        finger = []
+        # màgia iterativa per a aconseguir els mails
+        for i in range(0, len(keys)):
+            fingerparsed = str(keys[i]["fingerprint"])
+            finger.append(fingerparsed)
+        return finger
+    def get_list_pukeys_fingerprint (self):
+        keys = self.gpg.list_keys(False)
+        # variable que contindrà els mails
+        finger = []
+        # màgia iterativa per a aconseguir els mails
+        for i in range(0, len(keys)):
+            fingerparsed = str(keys[i]["fingerprint"])
+            finger.append(fingerparsed)
+        return finger
+    def get_list_prkeys_all (self):
+        keys = self.gpg.list_keys(True)
+        # variable que contindrà els mails
+        return keys
+    def get_list_pukeys_all (self):
+        keys = self.gpg.list_keys()
+        # variable que contindrà els mails
+        return keys
     # Aquesta part conté la màgia iterativa.
-    def get_names_on_text (self, text):
-        pattern = re.compile("\([^)]*\) \<[^)]*\>",re.S)
-        name = re.sub(pattern,"",text)
+    def get_names_on_text (self, text1):
+        pattern1 = re.compile(" \<[^)]*\>|\([^)]*\)",re.S)
+        text2 = re.sub(pattern1,"",text1)
+        name = text2[2:-2]
         return name
 
     def get_mails_on_text (self, text):
@@ -79,3 +113,28 @@ class Bash(object):
         input_data = self.gpg.gen_key_input(key_type="RSA", key_length=lenghofkey, name_real=nom, name_comment="", name_email=str(nom+"@enigma.pol"))
         key = self.gpg.gen_key(input_data)
         return key;
+    def remove_prkey (self, fingerprint="", id=-1):
+        delete_private_key = "gpg --batch --homedir "+self.Dir+" --delete-secret-key "
+        if fingerprint == "" and id == -1:
+            return;
+        elif id != -1:
+            fingerprints = self.get_list_prkeys_fingerprint()
+            fingerprints.reverse()
+            fingerprint = fingerprints[id]
+        if fingerprint != "" and (isinstance(fingerprint,str)):
+            process = subprocess.Popen(str(delete_private_key + fingerprint).split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+        return;
+    def remove_pukey (self, fingerprint="", id=-1):
+        delete_public_key  = "gpg --batch --homedir "+self.Dir+" --delete-key "
+        if fingerprint == "" and id == -1:
+            return;
+        elif id != -1:
+            fingerprints = self.get_list_pukeys_fingerprint()
+            fingerprints.reverse()
+            fingerprint = fingerprints[id]
+        if fingerprint != "" and (isinstance(fingerprint,str)):
+            self.remove_prkey(fingerprint=fingerprint)
+            process = subprocess.Popen(str(delete_public_key + fingerprint).split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+        return;
