@@ -36,13 +36,12 @@ class EnigmaPol(object):
                 # TODO fer administrador
                 # Ja comença a agafar forma. Encara queda fèina a fer
                 # Cridem a la part de l'administrador gpg
-                self.gpg_administrator();
+                self.gpg_administrator()
             elif choice == 3:
                 KeepGoing = False
     # el que farà en entrar al administrador de Claus
     def gpg_administrator (self):
         # while perquè estem en un menú
-        KeepGoing = True
         while True:
             # aconsegueix una llista de claus
             is_list_empty=[False,False]
@@ -58,7 +57,7 @@ class EnigmaPol(object):
             #    -> fila en la que estem
             # -> segona columna:
             #    -> columna en la que estem
-            # -> segona columna:
+            # -> tercera columna:
             #    -> acció que es farà. correspon amb un botó
             #    -> 0: exit. Per tant trencaríem el loop
             #    -> 1: enter. fer alguna cosa si estem a 0 en les columnes útils
@@ -67,19 +66,18 @@ class EnigmaPol(object):
             # Aquesta part està en desenvolupament
             # Hauria de tornar al menú anterior
             if choice[2] == 0:
-                return;
+                return
             elif choice == [0,0,1]:
                 choice2 = drawer.add_pkey(screen)
                 if choice2[0] != "":
-                    bash.create_private_key(choice2[0],choice2[1])
-            else:
-                # per tal de que les id's de les claus coincideixin, ja que sinó
-                #són una més del compte per culpa de l'opció "nova clau"
-                choice[0]-=1
+                    bash.create_private_key(choice2[0],choice2[1])   
             if choice[2] == 2:
                 if choice[1]==1 and is_list_empty[1]==False:
                     bash.remove_pukey(id=choice[0])
                 elif choice[1]==0 and is_list_empty[1]==False:
+                    # per tal de que les id's de les claus coincideixin, ja que sinó
+                    # són una més del compte per culpa de l'opció "nova clau"
+                    choice[0]-=1
                     bash.remove_prkey(id=choice[0])
 
     def server_administrator (self):
@@ -105,6 +103,9 @@ def setup_enigmapol(stdscr):
 if __name__ == "__main__":
     # per al control de menú cridem la funció així. inicialitza la finestra de curses
     curses.wrapper(setup_enigmapol)
-    Bash.remove_prkey(id=1)
     # per a ús purament debuggacional
-    sys.exit(0);
+    var1 = 1
+    var2 = 2
+    var3 = var1 + var2
+    print(var3)
+    sys.exit(0)

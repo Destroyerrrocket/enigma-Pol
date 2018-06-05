@@ -104,3 +104,4 @@ ENV/
 testdoc.txt.asc
 testdoc.txt
 chaocipher.py
+.vscode/
