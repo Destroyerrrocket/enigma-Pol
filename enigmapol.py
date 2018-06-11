@@ -81,9 +81,13 @@ class EnigmaPol(object):
                     bash.remove_prkey(id=choice[0])
 
     def server_administrator (self):
-        choice = drawer.keyboardebugger(screen)
-    def client_administrator (self):
+        #choice = drawer.keyboardebugger(screen)
         choice = drawer.colordebugger(screen)
+    def client_administrator (self):
+        #choice = drawer.colordebugger(screen)
+        #primer demanem la ip i port
+        choice = drawer.solicit_ip_port(screen)
+        drawer.client_screen(screen, choice)
 # la primera funció cridada
 # defineix variables glovals a tot el programa
 def setup_enigmapol(stdscr):

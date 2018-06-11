@@ -7,6 +7,7 @@ import locale
 import sys
 import time
 from datetime import datetime
+from client_terminal import Client_terminal
 locale.setlocale(locale.LC_ALL, '')
 code = locale.getpreferredencoding()
 # la classe
@@ -268,6 +269,42 @@ class Drawer(object):
                 sys.exit()
         # i retornem el resultat
         return selection
+
+    def solicit_ip_port(self, screen):
+        # Programaré aquest menú més endavant
+        return ["0.0.0.0", 1234]
+    def client_screen(self, screen, address):
+        screen.clear()
+        client = Client_terminal(address[0], address[1], [self.width-2, self.height-7])
+        rwitten_data = ""
+        while True:
+            self.screen_window(screen, 0, 0, self.height - 2, self.width - 1, curses.color_pair(8) + curses.A_REVERSE)
+            screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
+            screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
+            screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
+            x=0
+            for line in client.terminfo:
+                screen.addstr(
+                    3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
+                x += 1
+            
+            screen.refresh()
+            try:
+                action = screen.get_wch()
+                if action == "\n":
+                    client.send_message(rwitten_data)
+                    rwitten_data = ""
+                elif action == "\x7f":
+                    if rwitten_data != "":
+                        rwitten_data[0] = rwitten_data[0][:-1]
+                else:
+                    rwitten_data += action
+            # si decideix sortir de forma prematura
+            except KeyboardInterrupt:
+                sys.exit()
+            
+        
+
     def colordebugger (self,screen):
         # Aquest programa està pensat per a funcionar sota condicions especifiques. no hem mereix la pena comentar-lo
         checkvar1 = curses.has_colors()
@@ -277,7 +314,7 @@ class Drawer(object):
         a=True
         while a :
             screen.clear()
-            self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE)
+            self.screen_window(screen, 0, 0, self.height - 2, self.width - 1, curses.color_pair(5) + curses.A_REVERSE)
             screen.addstr(2,2,str(checkvar1))
             screen.addstr(3,2,str(checkvar2))
             screen.addstr(4,2,str(curses.COLORS))
@@ -328,15 +365,11 @@ class Drawer(object):
             y1=tempy0
         # número de "-" de la barra de adalt
         numslash=x1-x0
-        slash=""
-        space=""
         # calculem els caracters a usar
-        while (numslash>=0):
-            slash+="─"
-            space+=" "
-            numslash -= 1
-        # restem 2 als espais perquè hi ha un borde de 1 a cada vanda "|"
-        space = space[:-2]
+        slash="─"*numslash
+        space=" "*numslash
+        # restem 1 als espais perquè hi ha un borde de 1 a cada vanda "|". Un vorde ja està descomptat
+        space = space[:-1]
         # primer la linia de dalt i abaix
         screen.addstr(y0,x0,slash,data)
         screen.addstr(y1,x0,slash,data)

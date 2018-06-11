@@ -1,35 +1,40 @@
-#!/bin/python2
-# -*- coding: utf-8 -*-
+import time
+import datetime
 import socket
-import sys
+import socketserver
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# Bind the socket to the port
-server_address = ('localhost', 10000)
-print >>sys.stderr, 'starting up on %s port %s' % server_address
-sock.bind(server_address)
-# Listen for incoming connections
-sock.listen(1)
 
-while True:
-    # Wait for a connection
-    print >>sys.stderr, 'waiting for a connection'
-    connection, client_address = sock.accept()
+class MyTCPHandler(socketserver.BaseRequestHandler):
+    """
+    The request handler class for our server.
+
+    It is instantiated once per connection to the server, and must
+    override the handle() method to implement communication to the
+    client.
+    """
+
+    def handle(self):
+        # self.request is the TCP socket connected to the client
+        self.data = self.request.recv(1024).strip()
+        print("{} wrote:".format(self.client_address[0]))
+        print(self.data)
+        # just send back the same data, but upper-cased
+        self.request.sendall(self.data.upper())
+
+
+if __name__ == "__main__":
+    host = '0.0.0.0'
+    port = 1234
+    buf = 1024
+    print("press Ctrl+C to stop the server")
     try:
-        print >>sys.stderr, 'connection from', client_address
-
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(2048)
-            if data:
-                print >>sys.stderr, 'received "%s"' % data
-                print >>sys.stderr, 'sending data back to the client'
-                connection.sendall(data)
-            else:
-                print >>sys.stderr, 'no more data from', client_address
-                break
-        connection.sendall("hi bro")
-    finally:
-        # Clean up the connection
-        connection.close()
+        # Create the server, binding to localhost on port 9999
+        with socketserver.TCPServer((host, port), MyTCPHandler) as server:
+            # Activate the server; this will keep running until you
+            # interrupt the program with Ctrl-C
+            print("running on " + str(server.server_address))
+            server.serve_forever()
+    except KeyboardInterrupt:
+        print("Shutting down")
+        server.shutdown()
+        

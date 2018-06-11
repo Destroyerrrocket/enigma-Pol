@@ -1,29 +1,29 @@
-#!/bin/python2
-# -*- coding: utf-8 -*-
-import socket
 import sys
+import socket
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-Working = True
-# Connect the socket to the port where the server is listening
-server_address = ('localhost', 10000)
-print >>sys.stderr, 'connecting to %s port %s' % server_address
-sock.connect(server_address)
-try:
-    while Working:
-        # Send data
-        message = 'This is the message.  It will be repeated.'
-        print >>sys.stderr, 'sending "%s"' % message
-        sock.sendall(message)
-
-        # Look for the response
-        amount_received = 0
-        amount_expected = len(message)
-        data = sock.recv(2048)
-        amount_received += len(data)
-        print >>sys.stderr, 'received "%s"' % data
-
-finally:
-        print >>sys.stderr, 'closing socket'
-        sock.close()
+class Client(object):
+    
+    def __init__(self, ip, port, extra):
+        self.State = "Conectat"
+        self.error = ""
+        self.ip = ip
+        self.port = port
+        self.client = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        try:
+            self.server = self.client.connect((self.ip, self.port))
+        except ConnectionRefusedError:
+            self.State = "No conectat"
+            self.error = "Error: no connection to server"
+        self.init_extra(extra)
+    def init_extra (self, extra):
+        return
+    def recieve_message(self):
+        msg = self.client.recv(4096)
+    def send_message(self, message):
+            self.client.sendall(message)
+            
+    def close_server(self):
+        self.client.close()
+    __recieve_message = recieve_message
+    __send_message = send_message
+    __close_server = close_server
