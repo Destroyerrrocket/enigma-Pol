@@ -1,8 +1,9 @@
+#!/bin/python3
 import time
 import datetime
 import socket
 import socketserver
-
+from bash import Bash 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
     """
@@ -17,12 +18,19 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
         print("{} wrote:".format(self.client_address[0]))
+        self.data = str(self.data)
         print(self.data)
+        self.Decide_what_to_do(self.data)
         # just send back the same data, but upper-cased
-        self.request.sendall(self.data.upper())
-
-
+        # self.request.sendall(self.data.upper())
+    def Decide_what_to_do (self, message):
+        if "------" in message:
+            return
+        else:
+            self.request.sendall(self.data)
 if __name__ == "__main__":
+    global bash
+    bash = Bash()
     host = '0.0.0.0'
     port = 1234
     buf = 1024

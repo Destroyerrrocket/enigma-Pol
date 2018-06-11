@@ -282,12 +282,15 @@ class Drawer(object):
             screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
+
             x=0
             for line in client.terminfo:
                 screen.addstr(
                     3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
                 x += 1
             
+
+            screen.addstr(self.height - 3, 1, rwitten_data, curses.color_pair(8) + curses.A_REVERSE)
             screen.refresh()
             try:
                 action = screen.get_wch()
@@ -296,15 +299,114 @@ class Drawer(object):
                     rwitten_data = ""
                 elif action == "\x7f":
                     if rwitten_data != "":
-                        rwitten_data[0] = rwitten_data[0][:-1]
+                        rwitten_data = rwitten_data[:-1]
                 else:
                     rwitten_data += action
             # si decideix sortir de forma prematura
             except KeyboardInterrupt:
                 sys.exit()
             
-        
+    def config(self, screen, listkeys):
+        # borrem la pantalla
+        screen.clear()
+        # el títol del menú 1
+        titol1 = "Clau Privada:"
+        listoptions = ["Enviar clau pública",
+                       "Acceptar claus públiques (No preguntar)"]
+        listall=[listkeys,listoptions]
+        # la posarem a 0 girant tota la taula. Per a l'usuari sempre serà
+        # l'ordre avitual perquè després les noves claus apareixeràn just a sota
+        listkeys.reverse()
+        # sizeinx=valors per a calcular distàncies de dibuix en la x, les poso a part per a fer el codi més llegible
+        # aquí calculem el tamany de la finestra 1 per tal que el text no se surti del rectangle
+        sizeinx = int(len(max(listkeys, key=len)))
+        # rectangle blau que serà el fons.
+        self.screen_window(screen, 0, 0, self.height-2,self.width-1, curses.color_pair(5)+curses.A_REVERSE)
+        # crea la finestra 1, del tamany relatiu al nombre de claus
+        self.screen_window(screen, 1, 1, 4+len(listkeys), sizeinx+7, curses.color_pair(8)+curses.A_REVERSE)
+        # crea la finestra 2
+        self.screen_window(screen, 1, sizeinx+9, 6, sizeinx+60, curses.color_pair(8)+curses.A_REVERSE)
+         
+        # titol de la finestra 1
+        screen.addstr(1, 2, titol1, curses.A_REVERSE+curses.color_pair(8))
+        # nou esquema per a fer anar el sistema de selecció. Ara requereix d'arrays
+        selecteditem = [0, 0, -1]
+        markedoptions = [0,1,1]
+        selection = [-1, -1, -1]
+        # la comfirmació es fa en les dos columnes de dades
+        while max(selection) < 0:
+            lenghlist1 = len(listkeys)
+            selected_key = [curses.A_REVERSE + curses.color_pair(8)] * lenghlist1
+            selected_config = [curses.A_REVERSE+curses.color_pair(8)]* len(listoptions)
+            # aquí, tenint en compte en quina finestra estem, determinarà
+            # quina clau està seleccionada.
+            if selecteditem[1] == 0:
+                lenghlist = lenghlist1
+                selected_key[selecteditem[0]] = curses.A_REVERSE + curses.color_pair(204)
+            elif selecteditem[1]==1:
+                lenghlist = len(listoptions)
+                selected_config[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204)
+            #selected[0]
+            # posem tots els correus en la pantalla en el bucle for
+            x=0
+            for mail in listkeys:
+                if x == markedoptions[0]:
+                    selectionoptiontext = "[X]"
+                else:
+                    selectionoptiontext = "[ ]"
+                screen.addstr(3+x, 3,selectionoptiontext+" "+mail, selected_key[x])
+                x += 1
+            # posem les altres opcions
+            x=0
+            for entrada in listoptions:
+                if markedoptions[x + 1] == 1:
+                    selectionoptiontext = "[X]"
+                else:
+                    selectionoptiontext = "[ ]"
+                screen.addstr(3+x,  sizeinx+10,selectionoptiontext + " " + entrada, selected_config[x])
+                x += 1
+            
+            # refresquem la pantalla
+            screen.refresh()
+            # SECCIÓ D'INTERACCIÓ DE L'USUARI
+            try:
+                # moure el cursor e iterar
+                action = screen.get_wch()
+                if action == curses.KEY_UP:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    selecteditem[0] = (selecteditem[0] - 1) % lenghlist
+                elif action == curses.KEY_DOWN:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    selecteditem[0] = (selecteditem[0] + 1) % lenghlist
+                elif action == curses.KEY_LEFT:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    selecteditem[1] = (selecteditem[1] - 1) % 2
+                    if selecteditem[0] > len(listall[selecteditem[1]])-1:
+                        selecteditem[0] = len(listall[selecteditem[1]])-1
+                elif action == curses.KEY_RIGHT:
+                    # VISCA LA PROGRAMACIÓ MODULAR!
+                    selecteditem[1] = (selecteditem[1] + 1) % 2
 
+                    if selecteditem[0] > len(listall[selecteditem[1]])-1:
+                        selecteditem[0] = len(listall[selecteditem[1]])-1
+                elif action == "q" or action == curses.KEY_EXIT:
+                    # sortir de la pantalla
+                    selecteditem[2] = 0
+                    selection = selecteditem
+                elif action == "\n":
+                    # entrar en opció del menú
+                    selecteditem[2] = 1
+                    selection = selecteditem
+                elif action == " ":
+                    # entrar en opció del menú
+                    if selecteditem[1] == 0:
+                        markedoptions[0] = selecteditem[0]
+                    else:
+                        markedoptions[selecteditem[0]+1] = (markedoptions[selecteditem[0]+1] + 1) % 2
+            # si decideix sortir de forma prematura
+            except KeyboardInterrupt:
+                sys.exit()
+        return selection
     def colordebugger (self,screen):
         # Aquest programa està pensat per a funcionar sota condicions especifiques. no hem mereix la pena comentar-lo
         checkvar1 = curses.has_colors()

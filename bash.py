@@ -112,11 +112,11 @@ class Bash(object):
     def create_private_key (self, nom, lenghofkey):
         input_data = self.gpg.gen_key_input(key_type="RSA", key_length=lenghofkey, name_real=nom, name_comment="", name_email=str(nom+"@enigma.pol"))
         key = self.gpg.gen_key(input_data)
-        return key;
+        return key
     def remove_prkey (self, fingerprint="", id=-1):
         delete_private_key = "gpg --batch --homedir "+self.Dir+" --delete-secret-key "
         if fingerprint == "" and id == -1:
-            return;
+            return
         elif id != -1:
             fingerprints = self.get_list_prkeys_fingerprint()
             fingerprints.reverse()
@@ -124,11 +124,11 @@ class Bash(object):
         if fingerprint != "" and (isinstance(fingerprint,str)):
             process = subprocess.Popen(str(delete_private_key + fingerprint).split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
-        return;
+        return
     def remove_pukey (self, fingerprint="", id=-1):
         delete_public_key  = "gpg --batch --homedir "+self.Dir+" --delete-key "
         if fingerprint == "" and id == -1:
-            return;
+            return
         elif id != -1:
             fingerprints = self.get_list_pukeys_fingerprint()
             fingerprints.reverse()
@@ -137,4 +137,4 @@ class Bash(object):
             self.remove_prkey(fingerprint=fingerprint)
             process = subprocess.Popen(str(delete_public_key + fingerprint).split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
-        return;
+        return

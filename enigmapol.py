@@ -80,9 +80,14 @@ class EnigmaPol(object):
                     choice[0]-=1
                     bash.remove_prkey(id=choice[0])
 
-    def server_administrator (self):
+    def server_administrator(self):
+        list1 = bash.get_list_prkeys_name()
         #choice = drawer.keyboardebugger(screen)
-        choice = drawer.colordebugger(screen)
+        # Mapa de choice:
+        # 0 --> clau a usar, per id. transformar a fingerprint
+        # 1 --> enviar claus?
+        # 2 --> acceptar claus? (NO/Preguntar)
+        choice = drawer.config(screen, list1)
     def client_administrator (self):
         #choice = drawer.colordebugger(screen)
         #primer demanem la ip i port
