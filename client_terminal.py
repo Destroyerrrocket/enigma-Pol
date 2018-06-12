@@ -11,11 +11,13 @@ class Client_terminal(Client):
     def recieve_message(self):
         try:
             msg = self.client.recv(4096)
-            self.terminfo.append(msg)
+            self.terminfo.append(msg.decode("utf-8"))
             self.terminfo.pop(0)
-            self.disconnect_from_server()
         except Exception as e:
-            self.error = e
+            self.error = str(e)
+            self.terminfo.append(self.lastsent)
+            self.terminfo.pop(0)
+        self.disconnect_from_server()
         self.checkstatus()
     def checkstatus(self):
         if (self.State != "Conectat"):

@@ -88,20 +88,25 @@ class EnigmaPol(object):
         # 0 --> clau a usar, per id. transformar a fingerprint
         # 1 --> enviar claus?
         # 2 --> acceptar claus? (NO/Preguntar)
-        choice = drawer.config(screen, list1)
+        config = drawer.config(screen, list1)
+        # guardem la configuració
+        bash.save_data(config[1], "send public key")
+        bash.save_data(config[2], "recieve public keys")
+
         # aconseguim la fingerprint de la clau. en cas que borri claus, evitarem problemes
         fingerprints = bash.get_list_prkeys_fingerprint()
         fingerprints.reverse()
-        fingerprint = fingerprints[choice[0]]
+        fingerprint = fingerprints[config[0]]
+        bash.save_data(fingerprint, "personal private key")
         #Json mode
-        data = {}
-        data["config"] = []
-        data["config"].append({
-            "personal private key": fingerprint,
-            "send public key": choice[1],
-            "recieve public keys": choice[2]
-        })
-        bash.save_data(data)
+        # data = {}
+        # data["config"] = []
+        # data["config"].append({
+        #     "personal private key": fingerprint,
+        #     "send public key": config[1],
+        #     "recieve public keys": config[2]
+        # })
+        # bash.save_data(data)
     def client_administrator (self):
         #choice = drawer.colordebugger(screen)
         #primer demanem la ip i port
@@ -127,8 +132,4 @@ if __name__ == "__main__":
     # per al control de menú cridem la funció així. inicialitza la finestra de curses
     curses.wrapper(setup_enigmapol)
     # per a ús purament debuggacional
-    var1 = 1
-    var2 = 2
-    var3 = var1 + var2
-    print(var3)
     sys.exit(0)

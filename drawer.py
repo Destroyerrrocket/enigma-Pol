@@ -285,8 +285,7 @@ class Drawer(object):
 
             x=0
             for line in client.terminfo:
-                screen.addstr(
-                    3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
+                screen.addstr(3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
                 x += 1
             
 

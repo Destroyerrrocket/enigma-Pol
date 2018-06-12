@@ -6,31 +6,31 @@ import socketserver
 from bash import Bash 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
-    """
-    The request handler class for our server.
-
-    It is instantiated once per connection to the server, and must
-    override the handle() method to implement communication to the
-    client.
-    """
-
+        
+    
     def handle(self):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
         print("{} wrote:".format(self.client_address[0]))
-        self.data = str(self.data)
+        #self.data = str(self.data)
         print(self.data)
         self.Decide_what_to_do(self.data)
         # just send back the same data, but upper-cased
         # self.request.sendall(self.data.upper())
-    def Decide_what_to_do (self, message):
-        if "------" in message:
-            return
+    def Decide_what_to_do(self, message):
+        strmessage = message.decode(encoding="utf-8")
+        if "/info_server" in strmessage:
+            self.send_back("Last message id: " + str(lstmsgid) + "\nList of people: " + str(len(people)))
         else:
-            self.request.sendall(self.data)
+            self.send_back(message)
+
+    def send_back(self, message):
+        self.request.sendall(message)
 if __name__ == "__main__":
-    global bash
-    bash = Bash()
+    global bash, people, lstmsgid
+    bash = Bash(".server_keypool")
+    people = {}
+    lstmsgid = 0
     host = '0.0.0.0'
     port = 1234
     buf = 1024
