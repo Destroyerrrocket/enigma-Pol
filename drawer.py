@@ -21,7 +21,7 @@ class Drawer(object):
 # dibuixa el menú. funciona bé, així que de moment no la tocarem.
     def main_menu(self, screen):
         screen.clear()
-        text_of_the_menu=["Enigma Pol V0.0", "Connectar amb un Servidor", "Crear un Servidor", "Configurar Claus", "Sortir"]
+        text_of_the_menu=["Enigma Pol V0.0", "Connectar amb un Servidor", "Configuració", "Configurar Claus", "Sortir"]
         self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE)
         sizeinx=int(len(max(text_of_the_menu, key=len))/2)
         self.screen_window(screen,"~5","~"+str(sizeinx+2),"~5","~"+str(sizeinx+2),curses.color_pair(8)+curses.A_REVERSE)
@@ -392,11 +392,12 @@ class Drawer(object):
                 elif action == "q" or action == curses.KEY_EXIT:
                     # sortir de la pantalla
                     selecteditem[2] = 0
-                    selection = selecteditem
+                    selection = markedoptions
                 elif action == "\n":
                     # entrar en opció del menú
                     selecteditem[2] = 1
-                    selection = selecteditem
+
+                    selection = markedoptions
                 elif action == " ":
                     # entrar en opció del menú
                     if selecteditem[1] == 0:

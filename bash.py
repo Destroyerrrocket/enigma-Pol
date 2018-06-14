@@ -12,19 +12,24 @@ from optparse import OptionParser
 from pathlib import Path
 import re
 from pprint import pprint
+import json
 class Bash(object):
     def __init__(self):
         # hem serà útil per a un mac i per si en un futur decideixo portejar-lo a Windows
         self.OS = platform.system()
         # per al directori de treball.
         # probablement aquesta part es podrà configurar a alguna vanda més endavant
-        self.Dir = str(str(Path.home())+"/.gnupgpol")
+        self.GPGDir = str(Path.home()) + "/.gnupgpol"
+        self.ConfigDir = str(Path.home()) + "/.config/EnigmaPol"
         # crearem el directori. GnuPG m'ha donat problemes si no la creem personalment
-        if(not os.path.exists(self.Dir)):
-            os.makedirs(self.Dir)
-            subprocess.Popen(str("chmod 700 "+self.Dir).split())
-            subprocess.Popen(str("chmod 600 "+self.Dir+"/*").split())
-        self.gpg = gnupg.GPG(gnupghome=self.Dir)
+        if(not os.path.exists(self.GPGDir)):
+            os.makedirs(self.GPGDir)
+            subprocess.Popen(str("chmod 700 "+self.GPGDir).split())
+            subprocess.Popen(str("chmod 600 " + self.GPGDir + "/*").split())
+        if(not os.path.exists(self.ConfigDir)):
+            os.makedirs(self.ConfigDir)
+        
+        self.gpg = gnupg.GPG(gnupghome=self.GPGDir)
         self.gpg.encoding = 'utf-8'
     # ja funciona. LLista totes les claus del directori
     def get_list_prkeys_mail (self):
@@ -114,7 +119,7 @@ class Bash(object):
         key = self.gpg.gen_key(input_data)
         return key
     def remove_prkey (self, fingerprint="", id=-1):
-        delete_private_key = "gpg --batch --homedir "+self.Dir+" --delete-secret-key "
+        delete_private_key = "gpg --batch --homedir "+self.GPGDir+" --delete-secret-key "
         if fingerprint == "" and id == -1:
             return
         elif id != -1:
@@ -126,7 +131,7 @@ class Bash(object):
             output, error = process.communicate()
         return
     def remove_pukey (self, fingerprint="", id=-1):
-        delete_public_key  = "gpg --batch --homedir "+self.Dir+" --delete-key "
+        delete_public_key  = "gpg --batch --homedir "+self.GPGDir+" --delete-key "
         if fingerprint == "" and id == -1:
             return
         elif id != -1:
@@ -138,3 +143,10 @@ class Bash(object):
             process = subprocess.Popen(str(delete_public_key + fingerprint).split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
         return
+    # espera data en format JSON
+    # TODO: Cambiem com treballem: farem que Bash s'ocupi d'administrar la configuració
+    def save_data(self, data):
+        with open(self.ConfigDir+'/data.txt', 'w') as outfile:
+            json.dump(data, outfile)
+
+    

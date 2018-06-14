@@ -6,6 +6,7 @@ import sys
 import curses
 import threading
 import locale
+import json
 from pprint import pprint
 # els altres dos scripts necessaris
 # drawer dibuixa els menús i s'ocupa (de moment) del teclat. això és degut
@@ -31,7 +32,7 @@ class EnigmaPol(object):
                 # TODO fer servidor
                 # de moment només serveix per a debugar les tecles del teclat.
                 # Que no és algo especialment útil.
-                self.server_administrator()
+                self.configuration()
             elif choice == 2:
                 # TODO fer administrador
                 # Ja comença a agafar forma. Encara queda fèina a fer
@@ -80,7 +81,7 @@ class EnigmaPol(object):
                     choice[0]-=1
                     bash.remove_prkey(id=choice[0])
 
-    def server_administrator(self):
+    def configuration(self):
         list1 = bash.get_list_prkeys_name()
         #choice = drawer.keyboardebugger(screen)
         # Mapa de choice:
@@ -88,6 +89,19 @@ class EnigmaPol(object):
         # 1 --> enviar claus?
         # 2 --> acceptar claus? (NO/Preguntar)
         choice = drawer.config(screen, list1)
+        # aconseguim la fingerprint de la clau. en cas que borri claus, evitarem problemes
+        fingerprints = bash.get_list_prkeys_fingerprint()
+        fingerprints.reverse()
+        fingerprint = fingerprints[choice[0]]
+        #Json mode
+        data = {}
+        data["config"] = []
+        data["config"].append({
+            "personal private key": fingerprint,
+            "send public key": choice[1],
+            "recieve public keys": choice[2]
+        })
+        bash.save_data(data)
     def client_administrator (self):
         #choice = drawer.colordebugger(screen)
         #primer demanem la ip i port
