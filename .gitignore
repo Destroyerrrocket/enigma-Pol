@@ -100,6 +100,11 @@ ENV/
 # mypy
 .mypy_cache/
 
+# miscellaneous modules
+time
+socket
+multiprocessing
+
 #Personal stuff
 testdoc.txt.asc
 testdoc.txt
