@@ -4,24 +4,12 @@ from client import Client
 class Client_terminal(Client):
     def init_extra(self, extra):
         self.terminfo = [" "] *extra[1]
-        
         self.refresh = 0
-        self.checkstatus()
 
-    def recieve_message(self):
-        try:
-            msg = self.client.recv(4096)
-            self.terminfo.append(msg.decode("utf-8"))
-            self.terminfo.pop(0)
-        except Exception as e:
-            self.error = str(e)
-            self.terminfo.append(self.lastsent)
-            self.terminfo.pop(0)
-        self.disconnect_from_server()
+    def print_data(self, message="", type_message="message", extra={}):
+        if type_message == "message":
+            arraymessage = message.splitlines()
+            for line in arraymessage:
+                self.terminfo.append(line)
+                self.terminfo.pop(0)
         self.checkstatus()
-    def checkstatus(self):
-        if (self.State != "Conectat"):
-            self.terminfo.append(self.error)
-            self.terminfo.pop(0)
-        else:
-            self.disconnect_from_server()

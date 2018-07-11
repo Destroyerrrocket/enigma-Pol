@@ -18,7 +18,7 @@ class Drawer(object):
         self.use_colors = curses.has_colors()
         self.can_set_colors = curses.can_change_color()
 
-# dibuixa el menú. funciona bé, així que de moment no la tocarem.
+    # dibuixa el menú. funciona bé, així que de moment no la tocarem.
     def main_menu(self, screen):
         screen.clear()
         text_of_the_menu=["Enigma Pol V0.0", "Connectar amb un Servidor", "Configuració", "Configurar Claus", "Sortir"]
@@ -275,14 +275,14 @@ class Drawer(object):
         return ["0.0.0.0", 1234]
     def client_screen(self, screen, address):
         screen.clear()
-        client = Client_terminal(address[0], address[1], [self.width-2, self.height-7])
+        client = Client_terminal(address[0], address[1], extra=[self.width-2, self.height-7])
         rwitten_data = ""
         while True:
             self.screen_window(screen, 0, 0, self.height - 2, self.width - 1, curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
-
+            screen.addstr(1, self.width-self.percentwin("10%", False), "Guests: "+str(len(client.people)), curses.color_pair(8) + curses.A_REVERSE)
             x=0
             for line in client.terminfo:
                 screen.addstr(3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
@@ -295,6 +295,7 @@ class Drawer(object):
                 action = screen.get_wch()
                 if action == "\n":
                     client.send_message(rwitten_data)
+                    client.process_data(client.recieve_message())
                     rwitten_data = ""
                 elif action == "\x7f":
                     if rwitten_data != "":
@@ -485,7 +486,7 @@ class Drawer(object):
         screen.addstr(y1,x0,"└",data)
         screen.addstr(y1,x1,"┘",data)
         return
-    def complexwin (self, i0, i1, is_y):
+    def complexwin (self, i0, i1, is_y=True):
         # moltes operacions matematiques. És una funció interna.
         # No es toca si segueix funcionant
         add=0
@@ -524,7 +525,7 @@ class Drawer(object):
                 i0-=(i1-a)+1
                 i1-=(i1-a)+1
         return i0, i1
-    def percentwin (self, percent, is_y):
+    def percentwin (self, percent, is_y=True):
         # moltes operacions matematiques. És una funció interna.
         # No es toca si segueix funcionant
         if isinstance(percent, str):

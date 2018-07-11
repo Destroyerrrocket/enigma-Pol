@@ -9,9 +9,7 @@ Funció MixColumn del xifratge AES
 La intenció d'aquesta funció és ser sufi-
 cientment autoexplicativa. També hi han
 aclaracions del que està està fent. 
-'''
 
-'''
 Per tal de facilitar la comprovació del tutor,
 posi les xifres de la columna en aquesta variable
 (recordi que els valors són de 8 bits. No possi

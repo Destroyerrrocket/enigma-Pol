@@ -14,14 +14,14 @@ import re
 from pprint import pprint
 import json
 class Bash(object):
-    def __init__(self, GPGDir="~/.gnupgpol"):
+    def __init__(self, GPGDir="~/.gnupgpol", ConfigDir="~/.config/EnigmaPol"):
         # hem serà útil per a un mac i per si en un futur decideixo portejar-lo a Windows
         self.OS = platform.system()
         # per al directori de treball.
         # probablement aquesta part es podrà configurar a alguna vanda més endavant
-
-        self.GPGDir = GPGDir
-        self.ConfigDir = "~/.config/EnigmaPol"
+        
+        self.GPGDir = GPGDir.replace("~", str(Path.home()), 1)
+        self.ConfigDir = ConfigDir.replace("~", str(Path.home()), 1)
 
         # crearem el directori. GnuPG m'ha donat problemes si no la creem personalment
         if(not os.path.exists(self.GPGDir)):
@@ -157,9 +157,21 @@ class Bash(object):
             output, error = process.communicate()
         return
     
-
+    def current_name(self):
+        list_names = self.get_list_prkeys_name()
+        list_fingr = self.get_list_prkeys_fingerprint()
+        name = self.load_data("personal private key")
+        id = 0
+        for finger in list_fingr:
+            if finger == name:
+                break
+            id += 1
+        return list_names[id]
+            
+    def dict_to_array(self, dictionary={}):
+        array = dictionary.items()
+        return array
     # espera data en format JSON
-    # TODO: Cambiem com treballem: farem que Bash s'ocupi d'administrar la configuració
     def load_data(self, tag, category="config"):
         raw_datas = self.load_raw_data(category)
         for raw_data in raw_datas:
@@ -176,7 +188,8 @@ class Bash(object):
                 tag : data
             })
         with open(self.ConfigDir+"/data.json", "w") as json_file:
-                json.dump(original_data, json_file, indent=2)
+                json.dump(original_data, json_file,
+                          indent=2, ensure_ascii=False)
                 json_file.close()
 
     def load_raw_data(self, category=""):
