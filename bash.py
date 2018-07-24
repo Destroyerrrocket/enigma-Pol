@@ -107,13 +107,21 @@ class Bash(object):
         keys = self.gpg.list_keys()
         # variable que contindrà els mails
         return keys
-    # Aquesta part conté la màgia iterativa.
+    def encrypt_message(self, message, fp):
+        return self.gpg.encrypt(message, fp, always_trust=True)
+
+    def decrypt_message(self, message, fp):
+        return self.gpg.decrypt(message)
+    def export_key(self, fp):
+        return self.gpg.export_keys(fp)
+    def import_key(self, data):
+        self.gpg.import_keys(data)
+
     def get_names_on_text (self, text1):
         pattern1 = re.compile(" \<[^)]*\>|\([^)]*\)",re.S)
         text2 = re.sub(pattern1,"",text1)
         name = text2[2:-2]
         return name
-
     def get_mails_on_text (self, text):
         # patró de regex per a trobar correus. per al que ens interessa està una mica massa desenvolupat,
         # però funciona. I això és el més important al final del dia
@@ -158,6 +166,17 @@ class Bash(object):
         return
     
     def current_name(self):
+        list_names = self.get_list_prkeys_name()
+        list_fingr = self.get_list_prkeys_fingerprint()
+        name = self.load_data("personal private key")
+        id = 0
+        for finger in list_fingr:
+            if finger == name:
+                break
+            id += 1
+        return list_names[id]
+
+    def current_fp(self):
         list_names = self.get_list_prkeys_name()
         list_fingr = self.get_list_prkeys_fingerprint()
         name = self.load_data("personal private key")
@@ -212,8 +231,8 @@ class Bash(object):
             return True
         except FileNotFoundError:
             if save_defaults:
-                self.save_data(0, "send public key")
-                self.save_data(0, "recieve public keys")
+                #self.save_data(0, "send public key")
+                #self.save_data(0, "recieve public keys")
                 fingerprints = self.get_list_prkeys_fingerprint()
                 fingerprints.reverse()
                 fingerprint = fingerprints[0]

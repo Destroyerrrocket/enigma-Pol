@@ -83,15 +83,20 @@ class EnigmaPol(object):
 
     def configuration(self):
         list1 = bash.get_list_prkeys_name()
+
+        fp = bash.load_data("personal private key")
+        fps = bash.get_list_prkeys_fingerprint()
+        fps.reverse()
+        
         #choice = drawer.keyboardebugger(screen)
         # Mapa de choice:
         # 0 --> clau a usar, per id. transformar a fingerprint
         # 1 --> enviar claus?
         # 2 --> acceptar claus? (NO/Preguntar)
-        config = drawer.config(screen, list1)
+        config = drawer.config(screen, list1, fps.index(fp))
         # guardem la configuració
-        bash.save_data(config[1], "send public key")
-        bash.save_data(config[2], "recieve public keys")
+        #bash.save_data(config[1], "send public key")
+        #bash.save_data(config[2], "recieve public keys")
 
         # aconseguim la fingerprint de la clau. en cas que borri claus, evitarem problemes
         fingerprints = bash.get_list_prkeys_fingerprint()

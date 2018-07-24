@@ -282,7 +282,7 @@ class Drawer(object):
             screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
-            screen.addstr(1, self.width-self.percentwin("10%", False), "Guests: "+str(len(client.people)), curses.color_pair(8) + curses.A_REVERSE)
+            screen.addstr(1, self.width-10, "Guests: "+str(len(client.people)), curses.color_pair(8) + curses.A_REVERSE)
             x=0
             for line in client.terminfo:
                 screen.addstr(3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
@@ -295,24 +295,28 @@ class Drawer(object):
                 action = screen.get_wch()
                 if action == "\n":
                     client.send_message(rwitten_data)
-                    client.process_data(client.recieve_message())
+                    client.process_incoming_data(client.recieve_message())
                     rwitten_data = ""
                 elif action == "\x7f":
                     if rwitten_data != "":
                         rwitten_data = rwitten_data[:-1]
+                elif action == 259:
+                    client.up()
+                elif action == 258:
+                    client.down()
                 else:
-                    rwitten_data += action
+                    rwitten_data += str(action)
             # si decideix sortir de forma prematura
             except KeyboardInterrupt:
                 sys.exit()
             
-    def config(self, screen, listkeys):
+    def config(self, screen, listkeys, name_selected):
         # borrem la pantalla
         screen.clear()
         # el títol del menú 1
         titol1 = "Clau Privada:"
-        listoptions = ["Enviar clau pública",
-                       "Acceptar claus públiques (No preguntar)"]
+        listoptions = ["(deprecated) Enviar clau pública",
+                       "(deprecated) Acceptar claus públiques (No preguntar)"]
         listall=[listkeys,listoptions]
         # la posarem a 0 girant tota la taula. Per a l'usuari sempre serà
         # l'ordre avitual perquè després les noves claus apareixeràn just a sota
@@ -331,7 +335,7 @@ class Drawer(object):
         screen.addstr(1, 2, titol1, curses.A_REVERSE+curses.color_pair(8))
         # nou esquema per a fer anar el sistema de selecció. Ara requereix d'arrays
         selecteditem = [0, 0, -1]
-        markedoptions = [0,1,1]
+        markedoptions = [name_selected, 1, 1]
         selection = [-1, -1, -1]
         # la comfirmació es fa en les dos columnes de dades
         while max(selection) < 0:

@@ -13,7 +13,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
     
     def handle(self):
         # self.request is the TCP socket connected to the client
-        self.data = self.request.recv(1024).strip()
+        self.data = self.request.recv(256).strip()
         print("{} wrote:".format(self.client_address[0]))
         #self.data = str(self.data)
         print("recv: " + self.data.decode())
@@ -61,7 +61,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
         for i in range(0, len(actions)):
             people = actions[i]["to"]
-            print(people)
+            #print(people)
             if i >= index:
                 if people == "all" or people == user_data["id"]:
                     encapsulated["all"].append(actions[i])
@@ -84,7 +84,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         } 
         return user_data
     def list_of_people(self):
-        list_of_peoples_name = [] 
+        list_of_peoples_name = []
         for action in actions:
             if action["type"] == "personadd":
                 list_of_peoples_name.append({ action["id_p"] : action["name"] })
@@ -102,15 +102,22 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 break
         return rand
 if __name__ == "__main__":
-    global bash, people, lstmsgid
+    global bash, people, lstmsgid, our_fp
     __file__ = os.path.dirname(os.path.abspath(__file__))
+    bash = Bash(__file__ + "/.server_keypool")
     
-    bash = Bash(__file__+"/.server_keypool")
+    while bash.get_list_prkeys_name() == []:
+        bash.create_private_key()
+    our_fp = bash.get_list_prkeys_fingerprint()
+    our_public_key = bash.export_key(our_fp)
+
     actions = []
+    #OBJECTIU: posar la clau pública al principi per a cualsevol individu
+    
     pool = []
     host = '0.0.0.0'
     port = 1234
-    buf = 1024
+    buf = 256
     print("press Ctrl+C to stop the server")
     try:
         with socketserver.TCPServer((host, port), MyTCPHandler) as server:
@@ -121,4 +128,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Shutting down")
         server.shutdown()
-        
