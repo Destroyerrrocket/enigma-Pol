@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # molta cosa per ferlo funcionar. alguna cosa pot ser que la tregui,
 # he estat fet probes
