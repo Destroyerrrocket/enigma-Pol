@@ -15,6 +15,15 @@ def mcd(a, b):
     if b == 0:
         return a
     return mcd(b, a % b)
+def mcd2(a,b):
+    while 1:
+        r=a%b
+        if not r:
+            break
+        a=b
+        b=r
+    return b
+
 def egcd(a, b):
     if a == 0:
         return (b, 0, 1)
