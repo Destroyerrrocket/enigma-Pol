@@ -8,7 +8,7 @@ Funció MixColumn del xifratge AES
 
 La intenció d'aquesta funció és ser sufi-
 cientment autoexplicativa. També hi han
-aclaracions del que està està fent. 
+aclaracions del que està està fent.
 
 Per tal de facilitar la comprovació del tutor,
 posi les xifres de la columna en aquesta variable
@@ -51,8 +51,7 @@ def mixColumn(column):
     #     [ 1  2  3  1]
     #     [ 1  1  2  3]
     #     [ 3  1  1  2]
-    
-    # fem la multiplicació (en un cos finit 256) entre la matriu i la columna 
+    # fem la multiplicació (en un cos finit 256) entre la matriu i la columna
     column[0] = galoisMult(temp[0],2) ^ galoisMult(temp[3],1) ^ \
                 galoisMult(temp[2],1) ^ galoisMult(temp[1],3)
 

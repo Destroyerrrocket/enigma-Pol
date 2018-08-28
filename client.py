@@ -1,11 +1,12 @@
 import sys
 import socket
 import custom_socket
+from threading import Thread
 from bash import Bash
 import json
 
 class Client(object):
-    
+
     def __init__(self, ip, port, bash = Bash(),extra = []):
         self.State = "Conectat"
         self.error = ""
@@ -13,8 +14,9 @@ class Client(object):
         self.ip = ip
         self.port = port
         self.bash = bash
-        
+
         self.actions = []
+        self.server_fp = ""
         self.id = 0
 
         self.people = []
@@ -30,7 +32,7 @@ class Client(object):
 
     def disconnect_from_server(self):
         self.client.close()
-    
+
     def connect_to_server(self):
         self.client = custom_socket.c_socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.client.settimeout(100)
@@ -40,40 +42,33 @@ class Client(object):
             self.State = "No conectat"
             self.error = str(e)
 
-
     def recieve_message(self):
-        msg = self.recvall()
+        msg = self.client.recvall()
         unbitedmsg = ""
         if msg.decode(encoding="utf-8") is not '':
-            self.error = ""
             try:
+                deencrypted = self.bash.decrypt_message(msg.decode())
+                jsoning = deencrypted.data.decode()
+                unbitedmsg = json.loads(jsoning)
+            except:
                 unbitedmsg = json.loads(msg.decode())
-            except json.decoder.JSONDecodeError:
-                sys.exit(msg.decode())
-        elif self.error is not "":
-            unbitedmsg = {"type": "error", "message": self.lastsent}
+        elif self.error != "":
+            unbitedmsg = {}
+            unbitedmsg["all"] = []
+            unbitedmsg["all"].append({"type": "error", "message": self.error})
         if unbitedmsg is '':
-            unbitedmsg = {"type": "error", "message": "Server seems like it failed. Unexpected action?"}
+            unbitedmsg = {}
+            unbitedmsg["all"] = []
+            unbitedmsg["all"].append({"type": "error", "message": "Server seems like it failed. Unexpected action? error: " + self.error})
         return unbitedmsg
 
-    def recvall(self, BUFF_SIZE=256):
-        BUFF_SIZE = 256  # 4 KiB
-        data = b''
-        while True:
-            part = self.client.recv(BUFF_SIZE)
-            data += part
-            if len(part) < BUFF_SIZE:
-                # either 0 or end of data
-                break
-        return data
     def process_incoming_data(self, message):
-        previous_last_entry = len(self.actions)
+        #previous_last_entry = len(self.actions)
         for answer_entry in message["all"]:
             self.actions.append(answer_entry)
             if answer_entry["type"] == "personadd":
                 if (answer_entry["name"] not in self.people):
                     self.people.append(answer_entry["name"])
-
             elif answer_entry["type"] == "personremove":
                 for i in range(0, self.people):
                     if self.people[i] == answer_entry["name"]:
@@ -81,14 +76,19 @@ class Client(object):
                 self.people.pop(0)
             elif answer_entry["type"] == "message":
                 self.print_data("[" + answer_entry["name"] + "]: " + answer_entry["message"])
+            elif answer_entry["type"] == "server_key":
+                self.bash.import_key(answer_entry["message"])
+                self.server_fp = answer_entry["fp"]
+            elif answer_entry["type"] == "error":
+                self.print_data("[ERROR]: " + answer_entry["message"])
         # line for debugging
         # self.print_data(message=str(json.dumps(message, indent=4)))
-           
-        
+
+
     def send_message(self, message="", type_message="message", to="", extra={}):
-        if type_message == "message":  
+        if type_message == "message":
             self.lastsent = message
-        
+
         our_data = {
             "type"              : type_message,
             "message"           : message,
@@ -101,8 +101,10 @@ class Client(object):
         arrextra = self.bash.dict_to_array(extra)
         for ext in arrextra:
             our_data[ext[0]] = ext[1]
-        
-        bited_our_data = json.dumps(our_data, indent=4).encode()
+        if self.server_fp != "":
+            bited_our_data = str(self.bash.encrypt_message(json.dumps(our_data, indent=4), self.server_fp)).encode()
+        else:
+            bited_our_data = json.dumps(our_data, indent=4).encode()
 
         self.connect_to_server()
         try:
@@ -119,14 +121,18 @@ class Client(object):
         self.disconnect_from_server()
 
     def first_connection(self):
+        self.get_actions()
         self.ask_for_id()
-
-        self.send_message(type_message="personadd")
+        our_public_key = self.bash.export_key(self.bash.load_data("personal private key"))
+        self.send_message(message=our_public_key, type_message="personadd")
         answer = self.recieve_message()
         self.process_incoming_data(answer)
-        
 
-        
+    def get_actions(self):
+        self.send_message(type_message="get_actions")
+        answer = self.recieve_message()
+        self.process_incoming_data(answer)
+
     def ask_for_id(self):
         self.send_message(type_message="get_id_from_pool")
         answer = self.recieve_message()

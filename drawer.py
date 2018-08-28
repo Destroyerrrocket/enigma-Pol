@@ -8,11 +8,13 @@ import sys
 import time
 from datetime import datetime
 from client_terminal import Client_terminal
+from threading import Thread
+
 locale.setlocale(locale.LC_ALL, '')
 code = locale.getpreferredencoding()
 # la classe
 class Drawer(object):
-# per tal de treballar bé, millor ja agafem les mesures de pantalla
+    # per tal de treballar bé, millor ja agafem les mesures de pantalla
     def __init__ (self, screen):
         self.height, self.width = screen.getmaxyx()
         self.use_colors = curses.has_colors()
@@ -25,7 +27,7 @@ class Drawer(object):
         self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE)
         sizeinx=int(len(max(text_of_the_menu, key=len))/2)
         self.screen_window(screen,"~5","~"+str(sizeinx+2),"~5","~"+str(sizeinx+2),curses.color_pair(8)+curses.A_REVERSE)
-        
+
         # aquesta part defineix el botó seleccionat de forma predeterminada
         # i inicialitza la variable del botó finalment seleccionat
 
@@ -275,10 +277,26 @@ class Drawer(object):
         return ["0.0.0.0", 1234]
     def client_screen(self, screen, address):
         screen.clear()
-        client = Client_terminal(address[0], address[1], extra=[self.width-2, self.height-7])
-        rwitten_data = ""
+        client = Client_terminal(address[0], address[1], extra=[self.width - 2, self.height - 7])
+        self.CLIENT_updateThread1 = True
+        self.CLIENT_updateThread2 = True
+        self.CLIENT_InProcessThread1 = False
+        self.CLIENT_InProcessThread2 = False
+        self.CLIENT_InProcessMAINThread = False
+        self.CLIENT_rwitten_data = ""
+        self.t1 = Thread(target=self.Threaded_client_screen_1, args=(screen, client))
+        self.t1.daemon = True
+        self.t1.start()
+        self.t2 = Thread(target=self.Threaded_client_screen_2, args=(client, ))
+        self.t2.daemon = True
+        self.t2.start()
+        temprefreix = 0
         while True:
+            while self.CLIENT_InProcessThread1 and self.CLIENT_InProcessThread2:
+                temprefreix += 1
+            self.CLIENT_InProcessMAINThread = True
             self.screen_window(screen, 0, 0, self.height - 2, self.width - 1, curses.color_pair(8) + curses.A_REVERSE)
+            screen.addstr(2, 50, str(temprefreix))
             screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
             screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
@@ -287,29 +305,62 @@ class Drawer(object):
             for line in client.terminfo:
                 screen.addstr(3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
                 x += 1
-            
-
-            screen.addstr(self.height - 3, 1, rwitten_data, curses.color_pair(8) + curses.A_REVERSE)
+            screen.addstr(self.height - 3, 1, self.CLIENT_rwitten_data, curses.color_pair(8) + curses.A_REVERSE)
             screen.refresh()
+            self.CLIENT_InProcessMAINThread = False
+            if not self.t1.is_alive and not self.t2.is_alive:
+                return 0
+            while not self.CLIENT_updateThread1 and not self.CLIENT_updateThread2:
+                pass
+
+    def Threaded_client_screen_2(self, client):
+        while True:
+            time.sleep(1)
+            while self.CLIENT_InProcessThread1 and self.CLIENT_InProcessMAINThread:
+                pass
+            self.CLIENT_InProcessThread2 = True
+            client.get_actions()
+            self.CLIENT_updateThread2 = True
+            self.CLIENT_InProcessThread2 = False
+            if not self.t1.is_alive:
+                return 0
+            time.sleep(1)
+
+    def Threaded_client_screen_1(self, screen, client):
+        while True:
             try:
                 action = screen.get_wch()
                 if action == "\n":
-                    client.send_message(rwitten_data)
+                    while self.CLIENT_InProcessThread2 and self.CLIENT_InProcessMAINThread:
+                        pass
+                    self.CLIENT_InProcessThread1 = True
+                    client.send_message(self.CLIENT_rwitten_data)
                     client.process_incoming_data(client.recieve_message())
-                    rwitten_data = ""
+                    self.CLIENT_rwitten_data = ""
                 elif action == "\x7f":
-                    if rwitten_data != "":
-                        rwitten_data = rwitten_data[:-1]
+                    while self.CLIENT_InProcessThread2 and self.CLIENT_InProcessMAINThread:
+                        pass
+                    self.CLIENT_InProcessThread1 = True
+                    if self.CLIENT_rwitten_data != "":
+                        self.CLIENT_rwitten_data = self.CLIENT_rwitten_data[:-1]
                 elif action == 259:
                     client.up()
                 elif action == 258:
                     client.down()
+                elif action == curses.KEY_EXIT:
+                    # sortir de la pantalla
+                    self.CLIENT_updateThread1 = True
+                    self.CLIENT_InProcessThread1 = False
+                    return 0
                 else:
-                    rwitten_data += str(action)
+                    self.CLIENT_rwitten_data += str(action)
             # si decideix sortir de forma prematura
             except KeyboardInterrupt:
                 sys.exit()
-            
+            self.CLIENT_InProcessThread1 = False
+            self.CLIENT_updateThread1 = True
+            time.sleep(0.002)
+
     def config(self, screen, listkeys, name_selected):
         # borrem la pantalla
         screen.clear()
@@ -330,7 +381,7 @@ class Drawer(object):
         self.screen_window(screen, 1, 1, 4+len(listkeys), sizeinx+7, curses.color_pair(8)+curses.A_REVERSE)
         # crea la finestra 2
         self.screen_window(screen, 1, sizeinx+9, 6, sizeinx+60, curses.color_pair(8)+curses.A_REVERSE)
-         
+
         # titol de la finestra 1
         screen.addstr(1, 2, titol1, curses.A_REVERSE+curses.color_pair(8))
         # nou esquema per a fer anar el sistema de selecció. Ara requereix d'arrays
@@ -369,7 +420,7 @@ class Drawer(object):
                     selectionoptiontext = "[ ]"
                 screen.addstr(3+x,  sizeinx+10,selectionoptiontext + " " + entrada, selected_config[x])
                 x += 1
-            
+
             # refresquem la pantalla
             screen.refresh()
             # SECCIÓ D'INTERACCIÓ DE L'USUARI

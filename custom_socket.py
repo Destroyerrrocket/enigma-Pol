@@ -1,8 +1,7 @@
 import socket
 
 class c_socket(socket.socket):
-    def recvall(self, BUFF_SIZE=256):
-        BUFF_SIZE = 256  # 4 KiB
+    def recvall(self, BUFF_SIZE=2048):
         data = b''
         while True:
             part = self.recv(BUFF_SIZE)

@@ -19,7 +19,7 @@ class Bash(object):
         self.OS = platform.system()
         # per al directori de treball.
         # probablement aquesta part es podrà configurar a alguna vanda més endavant
-        
+
         self.GPGDir = GPGDir.replace("~", str(Path.home()), 1)
         self.ConfigDir = ConfigDir.replace("~", str(Path.home()), 1)
 
@@ -30,13 +30,13 @@ class Bash(object):
             subprocess.Popen(str("chmod 600 " + self.GPGDir + "/*").split())
         if(not os.path.exists(self.ConfigDir)):
             os.makedirs(self.ConfigDir)
-        
+
         self.gpg = gnupg.GPG(gnupghome=self.GPGDir)
         self.gpg.encoding = 'utf-8'
         # configuració predefinida
         self.sanity_check_for_users_data()
 
-    
+
     # ja funciona. LLista totes les claus del directori
     def get_list_prkeys_mail (self):
         keys = self.gpg.list_keys(True)
@@ -74,7 +74,7 @@ class Bash(object):
             nameparsed = self.get_names_on_text(str(keys[i]["uids"]))
             name.append(nameparsed)
         return name
-    
+
     def get_list_prkeys_fingerprint (self):
         keys = self.gpg.list_keys(True)
         # variable que contindrà els mails
@@ -85,11 +85,10 @@ class Bash(object):
                 fingerparsed = str(keys[i]["fingerprint"])
                 finger.append(fingerparsed)
         if finger == []:
-            self.create_private_key()
-            finger = self.get_list_prkeys_fingerprint()
-            return finger
-        else:
-            return finger
+            pass
+            #self.create_private_key()
+            #finger = self.get_list_prkeys_fingerprint()
+        return finger
     def get_list_pukeys_fingerprint (self):
         keys = self.gpg.list_keys(False)
         # variable que contindrà els mails
@@ -110,7 +109,7 @@ class Bash(object):
     def encrypt_message(self, message, fp):
         return self.gpg.encrypt(message, fp, always_trust=True)
 
-    def decrypt_message(self, message, fp):
+    def decrypt_message(self, message):
         return self.gpg.decrypt(message)
     def export_key(self, fp):
         return self.gpg.export_keys(fp)
@@ -135,9 +134,11 @@ class Bash(object):
         # retornem la part resultant que ens interessa. Sempre és la primera, així que no hi ha problema
         return (email[0][0])
     # en desenvolupament
-    def create_private_key (self, nom="default", lenghofkey="2048"):
+
+    def create_private_key(self, nom="default", lenghofkey="4096"):
         input_data = self.gpg.gen_key_input(key_type="RSA", key_length=lenghofkey, name_real=nom, name_comment="", name_email=str(nom+"@enigma.pol"))
         key = self.gpg.gen_key(input_data)
+        pprint(key)
         return key
     def remove_prkey (self, fingerprint="", id=-1):
         delete_private_key = "gpg --batch --homedir "+self.GPGDir+" --delete-secret-key "
@@ -164,7 +165,7 @@ class Bash(object):
             process = subprocess.Popen(str(delete_public_key + fingerprint).split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
         return
-    
+
     def current_name(self):
         list_names = self.get_list_prkeys_name()
         list_fingr = self.get_list_prkeys_fingerprint()
@@ -186,7 +187,7 @@ class Bash(object):
                 break
             id += 1
         return list_names[id]
-            
+
     def dict_to_array(self, dictionary={}):
         array = dictionary.items()
         return array
@@ -234,7 +235,8 @@ class Bash(object):
                 #self.save_data(0, "send public key")
                 #self.save_data(0, "recieve public keys")
                 fingerprints = self.get_list_prkeys_fingerprint()
-                fingerprints.reverse()
-                fingerprint = fingerprints[0]
-                self.save_data(fingerprint, "personal private key")
+                if fingerprints != []:
+                    fingerprints.reverse()
+                    fingerprint = fingerprints[0]
+                    self.save_data(fingerprint, "personal private key")
             return False
