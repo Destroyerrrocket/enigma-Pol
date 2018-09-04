@@ -17,6 +17,7 @@ class Bash(object):
     def __init__(self, GPGDir="~/.gnupgpol", ConfigDir="~/.config/EnigmaPol"):
         # hem serà útil per a un mac i per si en un futur decideixo portejar-lo a Windows
         self.OS = platform.system()
+        pprint("Current OS: " + self.OS)
         # per al directori de treball.
         # probablement aquesta part es podrà configurar a alguna vanda més endavant
 
@@ -30,10 +31,20 @@ class Bash(object):
             subprocess.Popen(str("chmod 600 " + self.GPGDir + "/*").split())
         if(not os.path.exists(self.ConfigDir)):
             os.makedirs(self.ConfigDir)
+        # en linux el deixarem buscar l'arxiu binari, perquè linux sap fer aquestes coses
+        if (self.OS == "Linux"):
+            self.gpg = gnupg.GPG(homedir=self.GPGDir,
+                keyring='pubring.gpg',
+                secring='trustdb.gpg')
+        # Apple necessita una mica més d'ajuda
+        elif(self.OS == "Mac"):
+            self.gpg = gnupg.GPG(binary='/usr/local/bin/gpg',
+                homedir=self.GPGDir,
+                keyring='pubring.gpg',
+                secring='trustdb.gpg')
+        else:
+            pprint("No soportem " + self.OS + "! Instal·la un sistema operatiu Linux per a utilitzar Enigma-Pol")
 
-        self.gpg = gnupg.GPG(homedir=self.GPGDir,
-            keyring='pubring.gpg',
-            secring='trustdb.gpg')
         self.gpg.encoding = 'utf-8'
         # configuració predefinida
         self.sanity_check_for_users_data()
