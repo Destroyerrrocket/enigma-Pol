@@ -37,13 +37,14 @@ class Bash(object):
                 keyring='pubring.gpg',
                 secring='trustdb.gpg')
         # Apple necessita una mica més d'ajuda
-        elif(self.OS == "Mac"):
+        elif(self.OS == "Darwin"):
             self.gpg = gnupg.GPG(binary='/usr/local/bin/gpg',
                 homedir=self.GPGDir,
                 keyring='pubring.gpg',
                 secring='trustdb.gpg')
         else:
             pprint("No soportem " + self.OS + "! Instal·la un sistema operatiu Linux per a utilitzar Enigma-Pol")
+            sys.exit(0)
 
         self.gpg.encoding = 'utf-8'
         # configuració predefinida
