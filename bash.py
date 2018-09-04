@@ -156,7 +156,8 @@ class Bash(object):
     # en desenvolupament
 
     def create_private_key(self, nom="default", lenghofkey="4096"):
-        input_data = self.gpg.gen_key_input(key_type="RSA", key_length=int(lenghofkey), name_real=nom, name_comment="", name_email=str(nom+"@enigma.pol"))
+        input_data = self.gpg.gen_key_input(key_type="RSA", key_length=int(lenghofkey), name_real=nom, name_email=str(nom+"@enigma.pol"))
+        pprint ("Last step!")
         key = self.gpg.gen_key(input_data)
         pprint(key)
         return key
