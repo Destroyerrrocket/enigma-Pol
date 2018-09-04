@@ -273,8 +273,65 @@ class Drawer(object):
         return selection
 
     def solicit_ip_port(self, screen):
-        # Programaré aquest menú més endavant
-        return ["0.0.0.0", 1234]
+        # declarem moltes variables. moltes són prou autoexplicatives
+        lenghlist = 2
+        selecteditem = 0
+        done = False
+        valuesgiven=[""]*(lenghlist+1)
+        # bits que axceptaré. No confio en que l'usuari els possi bé
+        # la comfirmació es fa en les dos columnes de dades
+        while not done:
+            # crearem una finestra. Està dintre del bucle per a evitar que quan
+            # l'usuari borri les lletres es quedin en pantalla. No vull que es
+            # pensin que el programa està trencat :)
+            self.screen_window(screen, "~5", "~15", "~5", "~15",curses.A_REVERSE+curses.color_pair(8))
+            # la opció seleccionada
+            selected=[curses.A_REVERSE+curses.color_pair(8)]*(lenghlist+1)
+            selected[selecteditem] = curses.A_REVERSE+curses.color_pair(204)
+            # creem les opcions del menú. Titol, opció 2 i opció 1. Aquest ordre
+            # és per a donar a l'usuari la il·lució que el cursor està en el que
+            # estàn escribint. No afecta massa el codi i prefereixo que quedi bonic
+            screen.addstr(
+                self.percentwin("50%", True) - 6,
+                self.percentwin("50%", False) - 14,
+                "Connecció a servidor: ", selected[2])
+            screen.addstr(
+                self.percentwin("50%", True) + 3,
+                self.percentwin("50%", False) - 14,
+                "Port: " + valuesgiven[1], selected[1])
+            screen.addstr(
+                self.percentwin("50%", True),
+                self.percentwin("50%", False) - 14,
+                "IP: "+valuesgiven[0], selected[0])
+            # refresquem la pantalla
+            screen.refresh()
+            # PART D'INTERACCIÓ
+            try:
+                # moure el cursor e iterar
+                action = screen.get_wch()
+                if action == curses.KEY_UP:
+                    selecteditem = (selecteditem - 1) % lenghlist
+                elif action == curses.KEY_DOWN:
+                    selecteditem = (selecteditem + 1) % lenghlist
+                elif action == "\n":
+                    # simplement li diem el tamany de la clau i li diem que ja hem cabat al incomplir el while
+                    done = True
+                    valuesgiven[1] = int(valuesgiven[1])
+                    valuesgiven[2] = True
+                # borrar un caràcter del text del nom.
+                elif action == curses.KEY_EXIT or action == "\x1b":
+                    done = True
+                    valuesgiven[2] = False
+                elif action == "\x7f":
+                    valuesgiven[selecteditem]=valuesgiven[selecteditem][:-1]
+                # Aquí assignem la tecla al text del nom.
+                else:
+                    valuesgiven[selecteditem]+=str(action)
+            # si decideix sortir de forma prematura
+            except KeyboardInterrupt:
+                sys.exit()
+        return valuesgiven
+
     def client_screen(self, screen, address):
         screen.clear()
         client = Client_terminal(address[0], address[1], extra=[self.width - 2, self.height - 7])

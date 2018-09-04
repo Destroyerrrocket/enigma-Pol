@@ -71,7 +71,7 @@ class EnigmaPol(object):
             elif choice == [0,0,1]:
                 choice2 = drawer.add_pkey(screen)
                 if choice2[0] != "":
-                    bash.create_private_key(choice2[0],choice2[1])   
+                    bash.create_private_key(choice2[0],choice2[1])
             if choice[2] == 2:
                 if choice[1]==1 and is_list_empty[1]==False:
                     bash.remove_pukey(id=choice[0])
@@ -87,7 +87,7 @@ class EnigmaPol(object):
         fp = bash.load_data("personal private key")
         fps = bash.get_list_prkeys_fingerprint()
         fps.reverse()
-        
+
         #choice = drawer.keyboardebugger(screen)
         # Mapa de choice:
         # 0 --> clau a usar, per id. transformar a fingerprint
@@ -116,7 +116,8 @@ class EnigmaPol(object):
         #choice = drawer.colordebugger(screen)
         #primer demanem la ip i port
         choice = drawer.solicit_ip_port(screen)
-        drawer.client_screen(screen, choice)
+        if choice[2] == True:
+            drawer.client_screen(screen, [choice[0], choice[1]])
 # la primera funció cridada
 # defineix variables glovals a tot el programa
 def setup_enigmapol(stdscr):
