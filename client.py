@@ -2,8 +2,8 @@ import sys
 import socket
 import custom_socket
 from threading import Thread
-from bash import Bash
 import json
+from bash import Bash
 
 class Client(object):
 

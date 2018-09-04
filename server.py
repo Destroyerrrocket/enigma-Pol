@@ -29,7 +29,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 deencrypted = bash.decrypt_message(bytedmessage.decode())
                 message = json.loads(deencrypted.data.decode())
                 # no imprimirem la informació sensitiva a la consola
-                #print("decrypted: " + deencrypted.data.decode())
+                print("decrypted: " + deencrypted.data.decode())
             except Exception as errorDecrypting:
                 print("Not decrypting due to: " + str(errorDecrypting))
                 message = json.loads(bytedmessage.decode())
@@ -155,6 +155,7 @@ if __name__ == "__main__":
     port = 1234
     buf = 256
     print("press Ctrl+C to stop the server")
+
     try:
         with socketserver.TCPServer((host, port), MyTCPHandler) as server:
             # Activate the server; this will keep running until you

@@ -7,7 +7,7 @@ import errno
 import subprocess
 import threading
 import platform
-import gnupg
+from pretty_bad_protocol import gnupg
 from optparse import OptionParser
 from pathlib import Path
 import re
@@ -31,7 +31,9 @@ class Bash(object):
         if(not os.path.exists(self.ConfigDir)):
             os.makedirs(self.ConfigDir)
 
-        self.gpg = gnupg.GPG(gnupghome=self.GPGDir)
+        self.gpg = gnupg.GPG(homedir=self.GPGDir,
+            keyring='pubring.gpg',
+            secring='trustdb.gpg')
         self.gpg.encoding = 'utf-8'
         # configuració predefinida
         self.sanity_check_for_users_data()
@@ -110,7 +112,13 @@ class Bash(object):
         return self.gpg.encrypt(message, fp, always_trust=True)
 
     def decrypt_message(self, message):
-        return self.gpg.decrypt(message)
+        decrypted = ""
+        try:
+            decrypted = self.gpg.decrypt(message)
+        except:
+            pass
+        return decrypted
+
     def export_key(self, fp):
         return self.gpg.export_keys(fp)
     def import_key(self, data):
@@ -136,7 +144,7 @@ class Bash(object):
     # en desenvolupament
 
     def create_private_key(self, nom="default", lenghofkey="4096"):
-        input_data = self.gpg.gen_key_input(key_type="RSA", key_length=lenghofkey, name_real=nom, name_comment="", name_email=str(nom+"@enigma.pol"))
+        input_data = self.gpg.gen_key_input(key_type="RSA", key_length=int(lenghofkey), name_real=nom, name_comment="", name_email=str(nom+"@enigma.pol"))
         key = self.gpg.gen_key(input_data)
         pprint(key)
         return key
@@ -170,23 +178,11 @@ class Bash(object):
         list_names = self.get_list_prkeys_name()
         list_fingr = self.get_list_prkeys_fingerprint()
         name = self.load_data("personal private key")
-        id = 0
-        for finger in list_fingr:
-            if finger == name:
-                break
-            id += 1
+        id = list_fingr.index(name)
         return list_names[id]
 
     def current_fp(self):
-        list_names = self.get_list_prkeys_name()
-        list_fingr = self.get_list_prkeys_fingerprint()
-        name = self.load_data("personal private key")
-        id = 0
-        for finger in list_fingr:
-            if finger == name:
-                break
-            id += 1
-        return list_names[id]
+        return self.load_data("personal private key")
 
     def dict_to_array(self, dictionary={}):
         array = dictionary.items()
@@ -208,9 +204,9 @@ class Bash(object):
                 tag : data
             })
         with open(self.ConfigDir+"/data.json", "w") as json_file:
-                json.dump(original_data, json_file,
-                          indent=2, ensure_ascii=False)
-                json_file.close()
+            json.dump(original_data, json_file,
+                      indent=2, ensure_ascii=False)
+            json_file.close()
 
     def load_raw_data(self, category=""):
         try:
@@ -235,8 +231,10 @@ class Bash(object):
                 #self.save_data(0, "send public key")
                 #self.save_data(0, "recieve public keys")
                 fingerprints = self.get_list_prkeys_fingerprint()
+                pprint(fingerprints)
                 if fingerprints != []:
                     fingerprints.reverse()
                     fingerprint = fingerprints[0]
+                    pprint(fingerprint)
                     self.save_data(fingerprint, "personal private key")
             return False
