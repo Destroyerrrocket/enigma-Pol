@@ -111,3 +111,4 @@ testdoc.txt
 .vscode/
 .server_keypool/
 .server_config/
+.server_Config/

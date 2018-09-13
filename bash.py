@@ -3,13 +3,10 @@
 # farà coses com ocupar-se de les crides a GPG.
 import sys
 import os
-import errno
+#import errno
 import subprocess
-import threading
 import platform
-from pretty_bad_protocol import gnupg
-from optparse import OptionParser
-from pathlib import Path
+import gnupg
 import re
 from pprint import pprint
 import json
@@ -157,7 +154,6 @@ class Bash(object):
 
     def create_private_key(self, nom="default", lenghofkey="4096"):
         input_data = self.gpg.gen_key_input(key_type="RSA", key_length=int(lenghofkey), name_real=nom, name_email=str(nom+"@enigma.pol"))
-        pprint ("Last step!")
         key = self.gpg.gen_key(input_data)
         pprint(key)
         return key

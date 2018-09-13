@@ -9,7 +9,7 @@ import locale
 import json
 from pprint import pprint
 # els altres dos scripts necessaris
-# drawer dibuixa els menús i s'ocupa (de moment) del teclat. això és degut
+# drawer dibuixa els menús i s'ocupa del teclat. això és degut
 # a curses, el manager de terminal que estem fent servir.
 from drawer import Drawer
 # Aquest script s'encarrega de les crides a bash. tot made in Pol Marcet :3

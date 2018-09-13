@@ -3,8 +3,6 @@
 global NAME_SERVER
 NAME_SERVER = "polserver"
 
-import time
-import datetime
 import custom_socket
 import socketserver
 import os
@@ -29,7 +27,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 deencrypted = bash.decrypt_message(bytedmessage.decode())
                 message = json.loads(deencrypted.data.decode())
                 # no imprimirem la informació sensitiva a la consola
-                print("decrypted: " + deencrypted.data.decode())
+                # print("decrypted: " + deencrypted.data.decode())
             except Exception as errorDecrypting:
                 print("Not decrypting due to: " + str(errorDecrypting))
                 message = json.loads(bytedmessage.decode())
@@ -152,7 +150,7 @@ if __name__ == "__main__":
 
     pool = []
     host = '0.0.0.0'
-    port = 1234
+    port = 12345
     buf = 256
     print("press Ctrl+C to stop the server")
 

@@ -6,7 +6,6 @@ import threading
 import locale
 import sys
 import time
-from datetime import datetime
 from client_terminal import Client_terminal
 from threading import Thread
 
@@ -23,7 +22,7 @@ class Drawer(object):
     # dibuixa el menú. funciona bé, així que de moment no la tocarem.
     def main_menu(self, screen):
         screen.clear()
-        text_of_the_menu=["Enigma Pol V0.0", "Connectar amb un Servidor", "Configuració", "Configurar Claus", "Sortir"]
+        text_of_the_menu=["Enigma Pol V1.0-Beta", "Connectar amb un Servidor", "Configuració", "Configurar Claus", "Sortir"]
         self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE)
         sizeinx=int(len(max(text_of_the_menu, key=len))/2)
         self.screen_window(screen,"~5","~"+str(sizeinx+2),"~5","~"+str(sizeinx+2),curses.color_pair(8)+curses.A_REVERSE)
@@ -73,7 +72,7 @@ class Drawer(object):
         # el títol del menú 2
         titol2="Claus Públiques:"
         # el text de les instruccions
-        text_of_controls="[R]: Borrar, [E]: Exportar, [I] Importar"
+        text_of_controls="[R]: Borrar"
         # en cas de que el menú 2 no tingui res, afegirem una variable per tal de que no exploti
         if len(listall[1])<1:
             listall[1][0]="--Buit--"
