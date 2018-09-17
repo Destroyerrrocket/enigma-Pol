@@ -9,6 +9,7 @@ import platform
 import gnupg
 import re
 from pprint import pprint
+from pathlib import Path
 import json
 class Bash(object):
     def __init__(self, GPGDir="~/.gnupgpol", ConfigDir="~/.config/EnigmaPol"):

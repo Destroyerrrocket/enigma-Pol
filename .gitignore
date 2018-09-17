@@ -104,6 +104,8 @@ ENV/
 time
 socket
 multiprocessing
+math
+random
 
 #Personal stuff
 testdoc.txt.asc
