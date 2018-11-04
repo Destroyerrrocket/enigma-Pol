@@ -87,13 +87,16 @@ class EnigmaPol(object):
         fp = bash.load_data("personal private key")
         fps = bash.get_list_prkeys_fingerprint()
         fps.reverse()
-
+        try:
+            name_selected_index = fps.index(fp)
+        except ValueError:
+            name_selected_index = 0
         #choice = drawer.keyboardebugger(screen)
         # Mapa de choice:
         # 0 --> clau a usar, per id. transformar a fingerprint
         # 1 --> enviar claus?
         # 2 --> acceptar claus? (NO/Preguntar)
-        config = drawer.config(screen, list1, fps.index(fp))
+        config = drawer.config(screen, list1, name_selected_index)
         # guardem la configuració
         #bash.save_data(config[1], "send public key")
         #bash.save_data(config[2], "recieve public keys")
@@ -115,9 +118,9 @@ class EnigmaPol(object):
     def client_administrator (self):
         #choice = drawer.colordebugger(screen)
         #primer demanem la ip i port
-        choice = drawer.solicit_ip_port(screen)
-        if choice[2] == True:
-            drawer.client_screen(screen, [choice[0], choice[1]])
+        choice = drawer.solicit_ip_port_pwd(screen)
+        if choice[3] == True:
+            drawer.client_screen(screen, [choice[0], choice[1], choice[2]])
 # la primera funció cridada
 # defineix variables glovals a tot el programa
 def setup_enigmapol(stdscr):

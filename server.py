@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
-global NAME_SERVER
+global NAME_SERVER, PWD_SERVER, PORT, IP
 NAME_SERVER = "polserver"
+PWD_SERVER = "12345"
+PORT = 12345
+IP = "0.0.0.0"
 
 import custom_socket
 import socketserver
 import os
+import sys
 import json
 import random
 from pprint import pprint # debug purposes
@@ -27,25 +31,42 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 deencrypted = bash.decrypt_message(bytedmessage.decode())
                 message = json.loads(deencrypted.data.decode())
                 # no imprimirem la informació sensitiva a la consola
-                # print("decrypted: " + deencrypted.data.decode())
+                #print("decrypted: " + deencrypted.data.decode())
             except Exception as errorDecrypting:
                 print("Not decrypting due to: " + str(errorDecrypting))
                 message = json.loads(bytedmessage.decode())
             self.client_fp = message["fp"]
             if message["type"] == "get_id_from_pool":
-                self.send_back_one(self.get_id_from_pool())
+                self.send_back_one(self.get_id_from_pool(), "id")
             elif message["type"] == "get_actions":
-                self.send_back_all(message["client_action_size"])
+                if message["pwd"] == PWD_SERVER:
+                    self.send_back_all(message["client_action_size"])
+                else:
+                    self.send_back_one(actions[0]["message"], actions[0]["type"])
             elif message["type"] == "personadd":
-                bash.import_key(message["message"])
-                message["message"] = "DELETED FOR SAFETY"
+                if message["pwd"] == PWD_SERVER:
+                    bash.import_key(message["message"])
+                    message["message"] = "DELETED FOR SAFETY"
+                    actions.append(message)
+                    user_data = self.get_user_data(message)
+                    self.send_back_all(message["client_action_size"], user_data=user_data)
+                else:
+                    message["message"] = "DELETED FOR SAFETY"
+                    self.send_back_one("Contrasenya incorrecta", "message")
+            elif message["type"] == "message":
+                if message["pwd"] == PWD_SERVER:
+                    actions.append(message)
+                    user_data = self.get_user_data(message)
+                    self.send_back_all(message["client_action_size"], user_data=user_data)
+                else:
+                    actions.append(message)
+                    self.send_back_one("Has dit: " + message["message"])
+            elif message["pwd"] == PWD_SERVER:
                 actions.append(message)
                 user_data = self.get_user_data(message)
                 self.send_back_all(message["client_action_size"], user_data=user_data)
             else:
-                actions.append(message)
-                user_data = self.get_user_data(message)
-                self.send_back_all(message["client_action_size"], user_data=user_data)
+                pass
 
     def send_back_one(self, message="", type_message="message", extra = {}):
         encapsulated = {}
@@ -53,6 +74,9 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         our_data = {
             "type": type_message,
             "message": message,
+            "name": bash.current_name(),
+            "to": "all",
+            "fp": bash.load_data("personal private key")
         }
         our_data.update(extra)
         """ arrextra = bash.dict_to_array(extra)
@@ -127,14 +151,17 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 # either 0 or end of data
                 break
         return data
+
 if __name__ == "__main__":
     global bash, people, lstmsgid, our_fp
     __file__ = os.path.dirname(os.path.abspath(__file__))
     bash = Bash(__file__ + "/.server_keypool", __file__ + "/.server_Config")
     #bash.create_private_key(nom="server_" + NAME_SERVER)
     while bash.get_list_prkeys_name() == []:
-        pprint(bash.get_list_prkeys_name())
-        bash.create_private_key(nom="server_" + NAME_SERVER)
+        print("Generating a private key...")
+        server_key = bash.create_private_key(nom="server_" + NAME_SERVER)
+        bash.save_data(server_key.fingerprint, "personal private key")
+
     our_fp = bash.get_list_prkeys_fingerprint()
     our_public_key = bash.export_key(our_fp)
 
@@ -149,13 +176,15 @@ if __name__ == "__main__":
     })
 
     pool = []
-    host = '0.0.0.0'
-    port = 12345
+    if len(sys.argv) >= 2:
+        IP = str(sys.argv[1])
+    if len(sys.argv) >= 3:
+        PORT = int(sys.argv[2])
     buf = 256
-    print("press Ctrl+C to stop the server")
+    print("Press Ctrl+C to stop the server")
 
     try:
-        with socketserver.TCPServer((host, port), MyTCPHandler) as server:
+        with socketserver.TCPServer((IP, PORT), MyTCPHandler) as server:
             # Activate the server; this will keep running until you
             # interrupt the program with Ctrl-C
             print("running on " + str(server.server_address))

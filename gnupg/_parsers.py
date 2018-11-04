@@ -989,7 +989,7 @@ class GenKey(object):
             self.status = 'key not created'
         elif (key.startswith("TRUST_") or
               key.startswith("PKA_TRUST_") or
-              key == "NEWSIG"):
+              key == "NEWSIG" or key == "ERROR"):
             pass
         else:
             raise ValueError("Unknown status message: %r" % key)
@@ -1655,6 +1655,8 @@ class Verify(object):
                     self.notations[self._last_notation_name] += value
                 else:
                     pass
+        elif key in "VERIFICATION_COMPLIANCE_MODE":
+            pass
         else:
             raise ValueError("Unknown status message: %r" % key)
 

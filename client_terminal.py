@@ -15,7 +15,7 @@ class Client_terminal(Client):
             arraymessage = message.splitlines()
             for line in arraymessage:
                 self.terminfo.clear()
-                
+
                 self.history.insert(0, line)
                 for i in range(0, self.max_size):
                     try:
@@ -26,9 +26,6 @@ class Client_terminal(Client):
                     except IndexError:
                         sys.exit(str(len(self.history)))
 
-
-
-        self.checkstatus()
     def up(self):
         if len(self.history) > + self.his_pint_in_time+self.max_size:
             self.his_pint_in_time += 1
@@ -40,7 +37,8 @@ class Client_terminal(Client):
                 else:
                     self.terminfo.insert(0, " ")
             except IndexError:
-                sys.exit(str(len(self.history)) + "<" + str(self.his_pint_in_time+self.max_size))
+                sys.exit(str(len(self.history)) + "<" + str(self.his_pint_in_time + self.max_size))
+
     def down(self):
         if self.his_pint_in_time > 0:
             self.his_pint_in_time -= 1
@@ -52,4 +50,4 @@ class Client_terminal(Client):
                 else:
                     self.terminfo.insert(0, " ")
             except IndexError:
-                sys.exit(str(len(self.history))+ " " + str(self.his_pint_in_time))
+                sys.exit(str(len(self.history))+ ">" + str(self.his_pint_in_time))

@@ -22,7 +22,11 @@ class Drawer(object):
     # dibuixa el menú. funciona bé, així que de moment no la tocarem.
     def main_menu(self, screen):
         screen.clear()
-        text_of_the_menu=["Enigma Pol V1.0-Beta", "Connectar amb un Servidor", "Configuració", "Configurar Claus", "Sortir"]
+        text_of_the_menu = ["Enigma Pol V1.0-Beta",
+                            "Connectar amb un servidor",
+                            "Configuració",
+                            "Configurar claus",
+                            "Sortir"]
         self.screen_window(screen,0,0,self.height-2,self.width-1,curses.color_pair(5)+curses.A_REVERSE)
         sizeinx=int(len(max(text_of_the_menu, key=len))/2)
         self.screen_window(screen,"~5","~"+str(sizeinx+2),"~5","~"+str(sizeinx+2),curses.color_pair(8)+curses.A_REVERSE)
@@ -51,10 +55,8 @@ class Drawer(object):
                 # moure el cursor e iterar
                 action = screen.get_wch()
                 if action == curses.KEY_UP:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] - 1) % lenghlist
                 elif action == curses.KEY_DOWN:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] + 1) % lenghlist
                 elif action == "\n":
                     selecteditem[1]=0
@@ -149,18 +151,14 @@ class Drawer(object):
                 # moure el cursor e iterar
                 action = screen.get_wch()
                 if action == curses.KEY_UP:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] - 1) % lenghlist
                 elif action == curses.KEY_DOWN:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] + 1) % lenghlist
                 elif action == curses.KEY_LEFT:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[1] = (selecteditem[1] - 1) % 2
                     if selecteditem[0] > len(listall[selecteditem[1]])-1:
                         selecteditem[0] = len(listall[selecteditem[1]])-1
                 elif action == curses.KEY_RIGHT:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[1] = (selecteditem[1] + 1) % 2
 
                     if selecteditem[0] > len(listall[selecteditem[1]])-1:
@@ -213,10 +211,8 @@ class Drawer(object):
                 # moure el cursor e iterar
                 action = screen.get_wch()
                 if action == curses.KEY_UP:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] - 1) % lenghlist
                 elif action == curses.KEY_DOWN:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] + 1) % lenghlist
                 elif action== curses.KEY_RIGHT:
                     if selecteditem[0]==1:
@@ -271,9 +267,9 @@ class Drawer(object):
         # i retornem el resultat
         return selection
 
-    def solicit_ip_port(self, screen):
+    def solicit_ip_port_pwd(self, screen):
         # declarem moltes variables. moltes són prou autoexplicatives
-        lenghlist = 2
+        lenghlist = 3
         selecteditem = 0
         done = False
         valuesgiven=[""]*(lenghlist+1)
@@ -283,7 +279,7 @@ class Drawer(object):
             # crearem una finestra. Està dintre del bucle per a evitar que quan
             # l'usuari borri les lletres es quedin en pantalla. No vull que es
             # pensin que el programa està trencat :)
-            self.screen_window(screen, "~5", "~15", "~5", "~15",curses.A_REVERSE+curses.color_pair(8))
+            self.screen_window(screen, "~5", "~15", "~6", "~15", curses.A_REVERSE + curses.color_pair(8))
             # la opció seleccionada
             selected=[curses.A_REVERSE+curses.color_pair(8)]*(lenghlist+1)
             selected[selecteditem] = curses.A_REVERSE+curses.color_pair(204)
@@ -292,16 +288,20 @@ class Drawer(object):
             # estàn escribint. No afecta massa el codi i prefereixo que quedi bonic
             screen.addstr(
                 self.percentwin("50%", True) - 6,
-                self.percentwin("50%", False) - 14,
-                "Connecció a servidor: ", selected[2])
+                self.percentwin("50%", False) - 14, "Connexió a servidor: ",
+                selected[3])
             screen.addstr(
-                self.percentwin("50%", True) + 3,
+                self.percentwin("50%", True) - 2,
                 self.percentwin("50%", False) - 14,
-                "Port: " + valuesgiven[1], selected[1])
+                "IP: "+valuesgiven[0], selected[0])
             screen.addstr(
                 self.percentwin("50%", True),
                 self.percentwin("50%", False) - 14,
-                "IP: "+valuesgiven[0], selected[0])
+                "Port: " + valuesgiven[1], selected[1])
+            screen.addstr(
+                self.percentwin("50%", True) + 2,
+                self.percentwin("50%", False) - 14,
+                "Contrasenya: "+valuesgiven[2], selected[2])
             # refresquem la pantalla
             screen.refresh()
             # PART D'INTERACCIÓ
@@ -316,11 +316,10 @@ class Drawer(object):
                     # simplement li diem el tamany de la clau i li diem que ja hem cabat al incomplir el while
                     done = True
                     valuesgiven[1] = int(valuesgiven[1])
-                    valuesgiven[2] = True
-                # borrar un caràcter del text del nom.
+                    valuesgiven[3] = True
                 elif action == curses.KEY_EXIT or action == "\x1b":
                     done = True
-                    valuesgiven[2] = False
+                    valuesgiven[3] = False
                 elif action == "\x7f":
                     valuesgiven[selecteditem]=valuesgiven[selecteditem][:-1]
                 # Aquí assignem la tecla al text del nom.
@@ -331,9 +330,11 @@ class Drawer(object):
                 sys.exit()
         return valuesgiven
 
-    def client_screen(self, screen, address):
+    def client_screen(self, screen, args):
         screen.clear()
-        client = Client_terminal(address[0], address[1], extra=[self.width - 2, self.height - 7])
+        client = Client_terminal(
+            args[0], args[1], args[2],
+            extra=[self.width - 2, self.height - 7])
         self.CLIENT_updateThread1 = True
         self.CLIENT_updateThread2 = True
         self.CLIENT_InProcessThread1 = False
@@ -347,44 +348,50 @@ class Drawer(object):
         self.t2.daemon = True
         self.t2.start()
         temprefreix = 0
-        while True:
-            while self.CLIENT_InProcessThread1 and self.CLIENT_InProcessThread2:
-                temprefreix += 1
-            self.CLIENT_InProcessMAINThread = True
-            self.screen_window(screen, 0, 0, self.height - 2, self.width - 1, curses.color_pair(8) + curses.A_REVERSE)
-            screen.addstr(2, 50, str(temprefreix))
-            screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
-            screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
-            screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
-            screen.addstr(1, self.width-10, "Guests: "+str(len(client.people)), curses.color_pair(8) + curses.A_REVERSE)
-            x=0
-            for line in client.terminfo:
-                screen.addstr(3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
-                x += 1
-            screen.addstr(self.height - 3, 1, self.CLIENT_rwitten_data, curses.color_pair(8) + curses.A_REVERSE)
-            screen.refresh()
-            self.CLIENT_InProcessMAINThread = False
-            if not self.t1.is_alive and not self.t2.is_alive:
-                return 0
-            while not self.CLIENT_updateThread1 and not self.CLIENT_updateThread2:
-                pass
+        try:
+            while True:
+                while self.CLIENT_InProcessThread1 and self.CLIENT_InProcessThread2:
+                    temprefreix += 1
+                self.CLIENT_InProcessMAINThread = True
+                self.screen_window(screen, 0, 0, self.height - 2, self.width - 1, curses.color_pair(8) + curses.A_REVERSE)
+                screen.addstr(2, 50, str(temprefreix))
+                screen.addstr(self.height - 4, 0,"├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
+                screen.addstr(2, 0, "├" + "─" * (self.width - 2) + "┤", curses.color_pair(8) + curses.A_REVERSE)
+                screen.addstr(1, 1, "Connectat: "+str(client.ip)+":"+str(client.port)+" ("+client.State+")", curses.color_pair(8) + curses.A_REVERSE)
+                screen.addstr(1, self.width-10, "Guests: "+str(len(client.people)), curses.color_pair(8) + curses.A_REVERSE)
+                x=0
+                for line in client.terminfo:
+                    screen.addstr(3+x, 1, line, curses.color_pair(8) + curses.A_REVERSE)
+                    x += 1
+                screen.addstr(self.height - 3, 1, self.CLIENT_rwitten_data, curses.color_pair(8) + curses.A_REVERSE)
+                screen.refresh()
+                self.CLIENT_InProcessMAINThread = False
+                if not self.t1.is_alive and not self.t2.is_alive:
+                    return 0
+                while not self.CLIENT_updateThread1 and not self.CLIENT_updateThread2:
+                    pass
+        except KeyboardInterrupt:
+            sys.exit()
 
     def Threaded_client_screen_2(self, client):
-        while True:
-            time.sleep(1)
-            while self.CLIENT_InProcessThread1 and self.CLIENT_InProcessMAINThread:
-                pass
-            self.CLIENT_InProcessThread2 = True
-            client.get_actions()
-            self.CLIENT_updateThread2 = True
-            self.CLIENT_InProcessThread2 = False
-            if not self.t1.is_alive:
-                return 0
-            time.sleep(1)
+        try:
+            while True:
+                time.sleep(1)
+                while self.CLIENT_InProcessThread1 and self.CLIENT_InProcessMAINThread:
+                    pass
+                self.CLIENT_InProcessThread2 = True
+                client.get_actions()
+                self.CLIENT_updateThread2 = True
+                self.CLIENT_InProcessThread2 = False
+                if not self.t1.is_alive:
+                    return 0
+                time.sleep(1)
+        except KeyboardInterrupt:
+            sys.exit()
 
     def Threaded_client_screen_1(self, screen, client):
-        while True:
-            try:
+        try:
+            while True:
                 action = screen.get_wch()
                 if action == "\n":
                     while self.CLIENT_InProcessThread2 and self.CLIENT_InProcessMAINThread:
@@ -410,12 +417,11 @@ class Drawer(object):
                     return 0
                 else:
                     self.CLIENT_rwitten_data += str(action)
-            # si decideix sortir de forma prematura
-            except KeyboardInterrupt:
-                sys.exit()
             self.CLIENT_InProcessThread1 = False
             self.CLIENT_updateThread1 = True
-            time.sleep(0.002)
+            time.sleep(0.001)
+        except KeyboardInterrupt:
+            sys.exit()
 
     def config(self, screen, listkeys, name_selected):
         # borrem la pantalla
@@ -434,9 +440,16 @@ class Drawer(object):
         # rectangle blau que serà el fons.
         self.screen_window(screen, 0, 0, self.height-2,self.width-1, curses.color_pair(5)+curses.A_REVERSE)
         # crea la finestra 1, del tamany relatiu al nombre de claus
-        self.screen_window(screen, 1, 1, 4+len(listkeys), sizeinx+7, curses.color_pair(8)+curses.A_REVERSE)
+        minimum_window_1_size = 15
+        if (minimum_window_1_size < sizeinx):
+            real_window_1_size = sizeinx
+        else:
+            real_window_1_size = minimum_window_1_size
+        self.screen_window(screen, 1, 1, 4 + len(listkeys),
+                           real_window_1_size + 7,
+                           curses.color_pair(8) + curses.A_REVERSE)
         # crea la finestra 2
-        self.screen_window(screen, 1, sizeinx+9, 6, sizeinx+60, curses.color_pair(8)+curses.A_REVERSE)
+        #self.screen_window(screen, 1, sizeinx+9, 6, sizeinx+60, curses.color_pair(8)+curses.A_REVERSE)
 
         # titol de la finestra 1
         screen.addstr(1, 2, titol1, curses.A_REVERSE+curses.color_pair(8))
@@ -454,9 +467,9 @@ class Drawer(object):
             if selecteditem[1] == 0:
                 lenghlist = lenghlist1
                 selected_key[selecteditem[0]] = curses.A_REVERSE + curses.color_pair(204)
-            elif selecteditem[1]==1:
+            elif selecteditem[1] == 1:
                 lenghlist = len(listoptions)
-                selected_config[selecteditem[0]] = curses.A_REVERSE+curses.color_pair(204)
+                selected_config[selecteditem[0]] = curses.A_REVERSE + curses.color_pair(204)
             #selected[0]
             # posem tots els correus en la pantalla en el bucle for
             x=0
@@ -474,7 +487,7 @@ class Drawer(object):
                     selectionoptiontext = "[X]"
                 else:
                     selectionoptiontext = "[ ]"
-                screen.addstr(3+x,  sizeinx+10,selectionoptiontext + " " + entrada, selected_config[x])
+                #screen.addstr(3+x,  sizeinx+10,selectionoptiontext + " " + entrada, selected_config[x])
                 x += 1
 
             # refresquem la pantalla
@@ -484,22 +497,19 @@ class Drawer(object):
                 # moure el cursor e iterar
                 action = screen.get_wch()
                 if action == curses.KEY_UP:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] - 1) % lenghlist
                 elif action == curses.KEY_DOWN:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
                     selecteditem[0] = (selecteditem[0] + 1) % lenghlist
                 elif action == curses.KEY_LEFT:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
-                    selecteditem[1] = (selecteditem[1] - 1) % 2
-                    if selecteditem[0] > len(listall[selecteditem[1]])-1:
-                        selecteditem[0] = len(listall[selecteditem[1]])-1
+                    pass
+                    #selecteditem[1] = (selecteditem[1] - 1) % 2
+                    #if selecteditem[0] > len(listall[selecteditem[1]])-1:
+                    #    selecteditem[0] = len(listall[selecteditem[1]])-1
                 elif action == curses.KEY_RIGHT:
-                    # VISCA LA PROGRAMACIÓ MODULAR!
-                    selecteditem[1] = (selecteditem[1] + 1) % 2
-
-                    if selecteditem[0] > len(listall[selecteditem[1]])-1:
-                        selecteditem[0] = len(listall[selecteditem[1]])-1
+                    pass
+                    #selecteditem[1] = (selecteditem[1] + 1) % 2
+                    #if selecteditem[0] > len(listall[selecteditem[1]])-1:
+                    #    selecteditem[0] = len(listall[selecteditem[1]])-1
                 elif action == "q" or action == curses.KEY_EXIT:
                     # sortir de la pantalla
                     selecteditem[2] = 0

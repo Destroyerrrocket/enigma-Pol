@@ -7,13 +7,14 @@ from bash import Bash
 
 class Client(object):
 
-    def __init__(self, ip, port, bash = Bash(),extra = []):
+    def __init__(self, ip, port, pwd = "", bash = Bash(), extra = []):
         self.State = "Conectat"
         self.error = ""
         self.lastsent = ""
         self.ip = ip
         self.port = port
         self.bash = bash
+        self.pwd = pwd
 
         self.actions = []
         self.server_fp = ""
@@ -35,15 +36,22 @@ class Client(object):
 
     def connect_to_server(self):
         self.client = custom_socket.c_socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-        self.client.settimeout(100)
+        self.client.settimeout(30)
         try:
             self.server = self.client.connect((self.ip, self.port))
-        except ConnectionRefusedError as e:
+        except KeyboardInterrupt:
+            sys.exit()
+        except:
+            self.error = str(sys.exc_info()[0])[1:-1]
             self.State = "No conectat"
-            self.error = str(e)
 
     def recieve_message(self):
-        msg = self.client.recvall()
+        msg = b""
+        try:
+            msg = self.client.recvall()
+        except:
+            self.error = str(sys.exc_info()[0])
+            self.State = "No conectat"
         unbitedmsg = ""
         if msg.decode(encoding="utf-8") is not '':
             try:
@@ -79,6 +87,8 @@ class Client(object):
             elif answer_entry["type"] == "server_key":
                 self.bash.import_key(answer_entry["message"])
                 self.server_fp = answer_entry["fp"]
+            elif answer_entry["type"] == "id":
+                self.id = answer_entry["message"]
             elif answer_entry["type"] == "error":
                 self.print_data("[ERROR]: " + answer_entry["message"])
         # line for debugging
@@ -96,12 +106,14 @@ class Client(object):
             "name"              : self.bash.current_name(),
             "to"                : "all",
             "client_action_size": len(self.actions),
-            "fp"                : self.bash.load_data("personal private key")
+            "fp"                : self.bash.load_data("personal private key"),
+            "pwd"               : ""
         }
         arrextra = self.bash.dict_to_array(extra)
         for ext in arrextra:
             our_data[ext[0]] = ext[1]
         if self.server_fp != "":
+            our_data["pwd"] = self.pwd
             bited_our_data = str(self.bash.encrypt_message(json.dumps(our_data, indent=4), self.server_fp)).encode()
         else:
             bited_our_data = json.dumps(our_data, indent=4).encode()
@@ -115,7 +127,7 @@ class Client(object):
 
     def checkstatus(self):
         if (self.State != "Conectat"):
-            self.print_data(self.error)
+            self.print_data("[ERROR]: " + self.error)
         elif self.actions == []:
             self.first_connection()
         self.disconnect_from_server()
@@ -136,9 +148,10 @@ class Client(object):
     def ask_for_id(self):
         self.send_message(type_message="get_id_from_pool")
         answer = self.recieve_message()
-        self.id = answer["all"][0]["message"]
+        self.process_incoming_data(answer)
 
-"""     __recieve_message = recieve_message
+"""
+    __recieve_message = recieve_message
     __send_message = send_message
     __close_server = close_server
     __disconnect_from_server = disconnect_from_server

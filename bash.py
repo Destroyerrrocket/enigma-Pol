@@ -34,12 +34,6 @@ class Bash(object):
             self.gpg = gnupg.GPG(homedir=self.GPGDir,
                 keyring='pubring.gpg',
                 secring='trustdb.gpg')
-        # Apple necessita una mica més d'ajuda
-        elif(self.OS == "Darwin"):
-            self.gpg = gnupg.GPG(binary='/usr/local/bin/gpg',
-                homedir=self.GPGDir,
-                keyring='pubring.gpg',
-                secring='trustdb.gpg')
         else:
             pprint("No soportem " + self.OS + "! Instal·la un sistema operatiu Linux per a utilitzar Enigma-Pol")
             sys.exit(0)
@@ -119,12 +113,20 @@ class Bash(object):
         # variable que contindrà els mails
         return keys
     def encrypt_message(self, message, fp):
-        return self.gpg.encrypt(message, fp, always_trust=True)
+        return self.gpg.encrypt(
+            message,
+            fp,
+            default_key=self.current_fp(),
+            always_trust=True,
+            throw_keyids=True,
+            )
 
     def decrypt_message(self, message):
         decrypted = ""
         try:
-            decrypted = self.gpg.decrypt(message)
+            decrypted = self.gpg.decrypt(
+                message,
+                always_trust=True)
         except:
             pass
         return decrypted
@@ -154,9 +156,12 @@ class Bash(object):
     # en desenvolupament
 
     def create_private_key(self, nom="default", lenghofkey="4096"):
-        input_data = self.gpg.gen_key_input(key_type="RSA", key_length=int(lenghofkey), name_real=nom, name_email=str(nom+"@enigma.pol"))
+        input_data = self.gpg.gen_key_input(
+            key_type="RSA",
+            key_length=int(lenghofkey),
+            name_real=nom,
+            name_email=str(nom + "@enigma.pol"))
         key = self.gpg.gen_key(input_data)
-        pprint(key)
         return key
     def remove_prkey (self, fingerprint="", id=-1):
         delete_private_key = "gpg --batch --homedir "+self.GPGDir+" --delete-secret-key "
@@ -238,13 +243,9 @@ class Bash(object):
             return True
         except FileNotFoundError:
             if save_defaults:
-                #self.save_data(0, "send public key")
-                #self.save_data(0, "recieve public keys")
                 fingerprints = self.get_list_prkeys_fingerprint()
-                pprint(fingerprints)
                 if fingerprints != []:
                     fingerprints.reverse()
                     fingerprint = fingerprints[0]
-                    pprint(fingerprint)
                     self.save_data(fingerprint, "personal private key")
             return False
