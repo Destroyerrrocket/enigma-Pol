@@ -26,16 +26,10 @@ class EnigmaPol(object):
             # dibuixem el menú i esperem que ens digui quina entrada l'usuari escolleix
             choice = drawer.main_menu(screen)[0]
             if choice == 0:
-                # TODO fer client
                 self.client_administrator()
             elif choice == 1:
-                # TODO fer servidor
-                # de moment només serveix per a debugar les tecles del teclat.
-                # Que no és algo especialment útil.
                 self.configuration()
             elif choice == 2:
-                # TODO fer administrador
-                # Ja comença a agafar forma. Encara queda fèina a fer
                 # Cridem a la part de l'administrador gpg
                 self.gpg_administrator()
             elif choice == 3:

@@ -399,6 +399,8 @@ class Drawer(object):
                     self.CLIENT_InProcessThread1 = True
                     client.send_message(self.CLIENT_rwitten_data)
                     client.process_incoming_data(client.recieve_message())
+                    self.CLIENT_InProcessThread1 = False
+                    self.CLIENT_updateThread1 = True
                     self.CLIENT_rwitten_data = ""
                 elif action == "\x7f":
                     while self.CLIENT_InProcessThread2 and self.CLIENT_InProcessMAINThread:
