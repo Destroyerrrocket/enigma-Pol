@@ -21,8 +21,8 @@ class Drawer(object):
     def main_menu(self, screen):
         screen.clear()
         text_of_the_menu = [
-            "Enigma Pol V1.0-Beta", "Connectar amb un servidor",
-            "Configuració", "Configurar claus", "Sortir"
+            "Enigma Pol V1.0", "Connectar amb un servidor", "Configuració",
+            "Configurar claus", "Sortir"
         ]
         self.screen_window(screen, 0, 0, self.height - 2, self.width - 1,
                            curses.color_pair(5) + curses.A_REVERSE)
