@@ -1,48 +1,45 @@
 #!/bin/python2
 # -*- coding: utf-8 -*-
-
 '''
 -----------------------------------------
 Funció MixColumn del xifratge AES
 -----------------------------------------
 
-La intenció d'aquesta funció és ser sufi-
-cientment autoexplicativa. També hi han
-aclaracions del que està està fent.
+La intenció d'aquesta funció és ser suficientment autoexplicativa.
+També hi han aclaracions del que està fent.
 
-Per tal de facilitar la comprovació del tutor,
-posi les xifres de la columna en aquesta variable
-(recordi que els valors són de 8 bits. No possi
-cap valor superior a 255 o inferior a 0)
+Per tal de facilitar la comprovació del tutor, posi les xifres de la columna
+en aquesta variable (recordi que els valors són de 8 bits. No posi cap valor
+superior a 255 o inferior a 0)
 '''
 
 column = [255, 21, 43, 111]
 
-
-
 from copy import copy
+
 
 def galoisMult(a, b):
     p = 0
     hiBitSet = 0
-    i=0
+    i = 0
     while i <= 8:
-             #Operació a nivell binari AND
+        #Operació a nivell binari AND
         if (b & 1) == 1:
             #Operació a nivell binari XOR
             p ^= a
-                     #Operació a nivell binari AND
+            #Operació a nivell binari AND
         hiBitSet = a & 0x80
-          # MOU BITS A L'ESQUERRA
+        # MOU BITS A L'ESQUERRA
         a <<= 1
         if hiBitSet == 0x80:
             #Operació a nivell binari XOR
             a ^= 0x1b
-          # MOU BITS A LA DRETA
+        # MOU BITS A LA DRETA
         b >>= 1
-             # MODUL
-        i+=1
+        # MODUL
+        i += 1
     return (p % 256)
+
 
 def mixColumn(column):
     temp = copy(column)
@@ -65,6 +62,7 @@ def mixColumn(column):
                 galoisMult(temp[1],1) ^ galoisMult(temp[0],3)
     return column
 
+
 def mixColumnInv(column):
     temp = copy(column)
     # matriu:
@@ -84,6 +82,7 @@ def mixColumnInv(column):
     column[3] = galoisMult(temp[3],14) ^ galoisMult(temp[2],9) ^ \
                 galoisMult(temp[1],13) ^ galoisMult(temp[0],11)
     return column
+
 
 print "columna a barregar: ", column
 mixColumn(column)

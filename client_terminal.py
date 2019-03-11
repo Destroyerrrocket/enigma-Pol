@@ -2,6 +2,7 @@ import threading
 import sys
 from client import Client
 
+
 class Client_terminal(Client):
     def init_extra(self, extra):
         self.terminfo = [" "] * extra[1]
@@ -20,24 +21,28 @@ class Client_terminal(Client):
                 for i in range(0, self.max_size):
                     try:
                         if (len(self.history) > i and len(self.history) != 0):
-                            self.terminfo.insert(0,self.history[i + self.his_pint_in_time])
+                            self.terminfo.insert(
+                                0, self.history[i + self.his_pint_in_time])
                         else:
-                            self.terminfo.insert(0," ")
+                            self.terminfo.insert(0, " ")
                     except IndexError:
                         sys.exit(str(len(self.history)))
 
     def up(self):
-        if len(self.history) > + self.his_pint_in_time+self.max_size:
+        if len(self.history) > +self.his_pint_in_time + self.max_size:
             self.his_pint_in_time += 1
         self.terminfo.clear()
         for i in range(0, self.max_size):
             try:
                 if (len(self.history) > i and len(self.history) != 0):
-                    self.terminfo.insert(0, self.history[i + self.his_pint_in_time])
+                    self.terminfo.insert(
+                        0, self.history[i + self.his_pint_in_time])
                 else:
                     self.terminfo.insert(0, " ")
             except IndexError:
-                sys.exit(str(len(self.history)) + "<" + str(self.his_pint_in_time + self.max_size))
+                sys.exit(
+                    str(len(self.history)) + "<" +
+                    str(self.his_pint_in_time + self.max_size))
 
     def down(self):
         if self.his_pint_in_time > 0:
@@ -46,8 +51,10 @@ class Client_terminal(Client):
         for i in range(0, self.max_size):
             try:
                 if (len(self.history) > i and len(self.history) != 0):
-                    self.terminfo.insert(0, self.history[i + self.his_pint_in_time])
+                    self.terminfo.insert(
+                        0, self.history[i + self.his_pint_in_time])
                 else:
                     self.terminfo.insert(0, " ")
             except IndexError:
-                sys.exit(str(len(self.history))+ ">" + str(self.his_pint_in_time))
+                sys.exit(
+                    str(len(self.history)) + ">" + str(self.his_pint_in_time))

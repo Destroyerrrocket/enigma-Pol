@@ -33,6 +33,7 @@ except:
 
 #-----------------------------------------------------------------------
 
+
 class Salsa20(object):
     """
         Salsa20 was submitted to eSTREAM, an EU stream cipher
@@ -62,13 +63,13 @@ class Salsa20(object):
         May 2009
     """
 
-    TAU    = ( 0x61707865, 0x3120646e, 0x79622d36, 0x6b206574 )
-    SIGMA  = ( 0x61707865, 0x3320646e, 0x79622d32, 0x6b206574 )
-    ROUNDS = 12                         # 8, 12, 20
+    TAU = (0x61707865, 0x3120646e, 0x79622d36, 0x6b206574)
+    SIGMA = (0x61707865, 0x3320646e, 0x79622d32, 0x6b206574)
+    ROUNDS = 12  # 8, 12, 20
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def __init__(self, key, iv='\x00'*8, rounds=ROUNDS):
+    def __init__(self, key, iv='\x00' * 8, rounds=ROUNDS):
         """ Both key and iv are bytestrings.  The key must be exactly
             16 or 32 bytes, 128 or 256 bits respectively.  The iv
             must be exactly 8 bytes (64 bits).
@@ -103,17 +104,17 @@ class Salsa20(object):
         """
         if len(key) not in [16, 32]:
             raise Exception('key must be either 16 or 32 bytes')
-        TAU   = self.TAU
+        TAU = self.TAU
         SIGMA = self.SIGMA
-        key_state = [0]*16
+        key_state = [0] * 16
         if len(key) == 16:
             k = list(struct.unpack('<4I', key))
-            key_state[0]  = TAU[0]
-            key_state[1]  = k[0]
-            key_state[2]  = k[1]
-            key_state[3]  = k[2]
-            key_state[4]  = k[3]
-            key_state[5]  = TAU[1]
+            key_state[0] = TAU[0]
+            key_state[1] = k[0]
+            key_state[2] = k[1]
+            key_state[3] = k[2]
+            key_state[4] = k[3]
+            key_state[5] = TAU[1]
 
             key_state[10] = TAU[2]
             key_state[11] = k[0]
@@ -124,12 +125,12 @@ class Salsa20(object):
 
         elif len(key) == 32:
             k = list(struct.unpack('<8I', key))
-            key_state[0]  = SIGMA[0]
-            key_state[1]  = k[0]
-            key_state[2]  = k[1]
-            key_state[3]  = k[2]
-            key_state[4]  = k[3]
-            key_state[5]  = SIGMA[1]
+            key_state[0] = SIGMA[0]
+            key_state[1] = k[0]
+            key_state[2] = k[1]
+            key_state[3] = k[2]
+            key_state[4] = k[3]
+            key_state[5] = SIGMA[1]
 
             key_state[10] = SIGMA[2]
             key_state[11] = k[4]
@@ -165,8 +166,8 @@ class Salsa20(object):
         iv_state[8] = 0
         iv_state[9] = 0
         self.state = iv_state
-        self.lastchunk = 64     # flag to ensure all but the last
-                                # chunks is a multiple of 64 bytes
+        self.lastchunk = 64  # flag to ensure all but the last
+        # chunks is a multiple of 64 bytes
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -180,12 +181,12 @@ class Salsa20(object):
         if self.lastchunk != 64:
             raise Exception('size of last chunk not a multiple of 64 bytes')
         dataout = ''
-        stream  = ''
+        stream = ''
         while datain:
-            stream = self._salsa20_scramble();
+            stream = self._salsa20_scramble()
             self.state[8] += 1
-            if self.state[8] == 0:               # if overflow in state[8]
-                self.state[9] += 1               # carry to state[9]
+            if self.state[8] == 0:  # if overflow in state[8]
+                self.state[9] += 1  # carry to state[9]
                 # not to exceed 2^70 x 2^64 = 2^134 data size ??? <<<<
             dataout += self._xor(stream, datain[:64])
             if len(datain) <= 64:
@@ -193,113 +194,111 @@ class Salsa20(object):
                 return dataout
             datain = datain[64:]
         raise Exception('Huh?')
+
     decrypt = encrypt
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def _ROL32(self, a,b):
+    def _ROL32(self, a, b):
         return ((a << b) | (a >> (32 - b))) & 0xffffffff
 
-    def _salsa20_scramble(self):     # 64 bytes in
+    def _salsa20_scramble(self):  # 64 bytes in
         """ self.state and other working strucures are lists of
             4-byte unsigned integers (32 bits).
 
             output must be converted to bytestring before return.
         """
-        x = self.state[:]    # makes a copy
+        x = self.state[:]  # makes a copy
         for i in xrange(self.ROUNDS):
             if i % 2 == 0:
-                x[ 4] ^= self._ROL32( (x[ 0]+x[12]) & 0xffffffff,  7)
-                x[ 8] ^= self._ROL32( (x[ 4]+x[ 0]) & 0xffffffff,  9)
-                x[12] ^= self._ROL32( (x[ 8]+x[ 4]) & 0xffffffff, 13)
-                x[ 0] ^= self._ROL32( (x[12]+x[ 8]) & 0xffffffff, 18)
-                x[ 9] ^= self._ROL32( (x[ 5]+x[ 1]) & 0xffffffff,  7)
-                x[13] ^= self._ROL32( (x[ 9]+x[ 5]) & 0xffffffff,  9)
-                x[ 1] ^= self._ROL32( (x[13]+x[ 9]) & 0xffffffff, 13)
-                x[ 5] ^= self._ROL32( (x[ 1]+x[13]) & 0xffffffff, 18)
-                x[14] ^= self._ROL32( (x[10]+x[ 6]) & 0xffffffff,  7)
-                x[ 2] ^= self._ROL32( (x[14]+x[10]) & 0xffffffff,  9)
-                x[ 6] ^= self._ROL32( (x[ 2]+x[14]) & 0xffffffff, 13)
-                x[10] ^= self._ROL32( (x[ 6]+x[ 2]) & 0xffffffff, 18)
-                x[ 3] ^= self._ROL32( (x[15]+x[11]) & 0xffffffff,  7)
-                x[ 7] ^= self._ROL32( (x[ 3]+x[15]) & 0xffffffff,  9)
-                x[11] ^= self._ROL32( (x[ 7]+x[ 3]) & 0xffffffff, 13)
-                x[15] ^= self._ROL32( (x[11]+x[ 7]) & 0xffffffff, 18)
+                x[4] ^= self._ROL32((x[0] + x[12]) & 0xffffffff, 7)
+                x[8] ^= self._ROL32((x[4] + x[0]) & 0xffffffff, 9)
+                x[12] ^= self._ROL32((x[8] + x[4]) & 0xffffffff, 13)
+                x[0] ^= self._ROL32((x[12] + x[8]) & 0xffffffff, 18)
+                x[9] ^= self._ROL32((x[5] + x[1]) & 0xffffffff, 7)
+                x[13] ^= self._ROL32((x[9] + x[5]) & 0xffffffff, 9)
+                x[1] ^= self._ROL32((x[13] + x[9]) & 0xffffffff, 13)
+                x[5] ^= self._ROL32((x[1] + x[13]) & 0xffffffff, 18)
+                x[14] ^= self._ROL32((x[10] + x[6]) & 0xffffffff, 7)
+                x[2] ^= self._ROL32((x[14] + x[10]) & 0xffffffff, 9)
+                x[6] ^= self._ROL32((x[2] + x[14]) & 0xffffffff, 13)
+                x[10] ^= self._ROL32((x[6] + x[2]) & 0xffffffff, 18)
+                x[3] ^= self._ROL32((x[15] + x[11]) & 0xffffffff, 7)
+                x[7] ^= self._ROL32((x[3] + x[15]) & 0xffffffff, 9)
+                x[11] ^= self._ROL32((x[7] + x[3]) & 0xffffffff, 13)
+                x[15] ^= self._ROL32((x[11] + x[7]) & 0xffffffff, 18)
             if i % 2 == 1:
-                x[ 1] ^= self._ROL32( (x[ 0]+x[ 3]) & 0xffffffff,  7)
-                x[ 2] ^= self._ROL32( (x[ 1]+x[ 0]) & 0xffffffff,  9)
-                x[ 3] ^= self._ROL32( (x[ 2]+x[ 1]) & 0xffffffff, 13)
-                x[ 0] ^= self._ROL32( (x[ 3]+x[ 2]) & 0xffffffff, 18)
-                x[ 6] ^= self._ROL32( (x[ 5]+x[ 4]) & 0xffffffff,  7)
-                x[ 7] ^= self._ROL32( (x[ 6]+x[ 5]) & 0xffffffff,  9)
-                x[ 4] ^= self._ROL32( (x[ 7]+x[ 6]) & 0xffffffff, 13)
-                x[ 5] ^= self._ROL32( (x[ 4]+x[ 7]) & 0xffffffff, 18)
-                x[11] ^= self._ROL32( (x[10]+x[ 9]) & 0xffffffff,  7)
-                x[ 8] ^= self._ROL32( (x[11]+x[10]) & 0xffffffff,  9)
-                x[ 9] ^= self._ROL32( (x[ 8]+x[11]) & 0xffffffff, 13)
-                x[10] ^= self._ROL32( (x[ 9]+x[ 8]) & 0xffffffff, 18)
-                x[12] ^= self._ROL32( (x[15]+x[14]) & 0xffffffff,  7)
-                x[13] ^= self._ROL32( (x[12]+x[15]) & 0xffffffff,  9)
-                x[14] ^= self._ROL32( (x[13]+x[12]) & 0xffffffff, 13)
-                x[15] ^= self._ROL32( (x[14]+x[13]) & 0xffffffff, 18)
+                x[1] ^= self._ROL32((x[0] + x[3]) & 0xffffffff, 7)
+                x[2] ^= self._ROL32((x[1] + x[0]) & 0xffffffff, 9)
+                x[3] ^= self._ROL32((x[2] + x[1]) & 0xffffffff, 13)
+                x[0] ^= self._ROL32((x[3] + x[2]) & 0xffffffff, 18)
+                x[6] ^= self._ROL32((x[5] + x[4]) & 0xffffffff, 7)
+                x[7] ^= self._ROL32((x[6] + x[5]) & 0xffffffff, 9)
+                x[4] ^= self._ROL32((x[7] + x[6]) & 0xffffffff, 13)
+                x[5] ^= self._ROL32((x[4] + x[7]) & 0xffffffff, 18)
+                x[11] ^= self._ROL32((x[10] + x[9]) & 0xffffffff, 7)
+                x[8] ^= self._ROL32((x[11] + x[10]) & 0xffffffff, 9)
+                x[9] ^= self._ROL32((x[8] + x[11]) & 0xffffffff, 13)
+                x[10] ^= self._ROL32((x[9] + x[8]) & 0xffffffff, 18)
+                x[12] ^= self._ROL32((x[15] + x[14]) & 0xffffffff, 7)
+                x[13] ^= self._ROL32((x[12] + x[15]) & 0xffffffff, 9)
+                x[14] ^= self._ROL32((x[13] + x[12]) & 0xffffffff, 13)
+                x[15] ^= self._ROL32((x[14] + x[13]) & 0xffffffff, 18)
         # OMIT FINAL XOR of initial round state
         # for i in xrange(16):
-            # x[i] = (x[i] + self.state[i]) & 0xffffffff
-        output = struct.pack('<16I',
-                            x[ 0], x[ 1], x[ 2], x[ 3],
-                            x[ 4], x[ 5], x[ 6], x[ 7],
-                            x[ 8], x[ 9], x[10], x[11],
-                            x[12], x[13], x[14], x[15])
-        return output                          # 64 bytes out
+        # x[i] = (x[i] + self.state[i]) & 0xffffffff
+        output = struct.pack('<16I', x[0], x[1], x[2], x[3], x[4], x[5], x[6],
+                             x[7], x[8], x[9], x[10], x[11], x[12], x[13],
+                             x[14], x[15])
+        return output  # 64 bytes out
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     def _xor(self, stream, din):
         dout = []
         for i in xrange(len(din)):
-            dout.append(chr(ord(stream[i])^ord(din[i])))
+            dout.append(chr(ord(stream[i]) ^ ord(din[i])))
         return ''.join(dout)
 
     if have_psyco:
-#        _key_setup = psyco.proxy(_key_setup)   # doesn't have much effect
-#        encrypt = psyco.proxy(encrypt)         # doesn't have much effect
-        _ROL32 = psyco.proxy(_ROL32)          # minor impact
+        #        _key_setup = psyco.proxy(_key_setup)   # doesn't have much effect
+        #        encrypt = psyco.proxy(encrypt)         # doesn't have much effect
+        _ROL32 = psyco.proxy(_ROL32)  # minor impact
         _salsa20_scramble = psyco.proxy(_salsa20_scramble)  # big help, 2x
-        _xor = psyco.proxy(_xor)                # very small impact
+        _xor = psyco.proxy(_xor)  # very small impact
+
 
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
+
 
 def test():
-
     def strnumlist(L):
         return ''.join([chr(x) for x in L])
 
     def printlong(label, bs, bpl, dent):
         tmpl = '%-' + str(dent) + 's'
         while bs:
-            print (tmpl % label)[:dent], bs[:bpl].encode('hex')
+            print(tmpl % label)[:dent], bs[:bpl].encode('hex')
             label = ''
             bs = bs[bpl:]
 
-
     if 0:
-        print '-'*40
-        key    = 'qwerty7890123456'
-        iv     = 'iv345678'
-        data   = 'Kilroy'
+        print '-' * 40
+        key = 'qwerty7890123456'
+        iv = 'iv345678'
+        data = 'Kilroy'
 
         s20 = Salsa20(key, iv)
         ciphertext = s20.encrypt(data)
 
-        printlong('  key:',  key,  64, 14)
-        printlong('  iv:',   iv,   64, 14)
+        printlong('  key:', key, 64, 14)
+        printlong('  iv:', iv, 64, 14)
         printlong('  data:', data, 64, 14)
         printlong('  ciphertext:', ciphertext, 64, 14)
 
-
     if 1:
-        print '-'*40
+        print '-' * 40
         '''
                      key = 80000000000000000000000000000000
                       IV = 0000000000000000
@@ -312,20 +311,19 @@ def test():
                            8C6713EC66C51881111593CCB3E8CB8F
                            8DE124080501EEEB389C4BCB6977CF95
         '''
-        key  = ('80000000000000000000000000000000').decode('hex')
-        iv   = ('0000000000000000').decode('hex')
-        data = ('00'*256).decode('hex')      # 512
+        key = ('80000000000000000000000000000000').decode('hex')
+        iv = ('0000000000000000').decode('hex')
+        data = ('00' * 256).decode('hex')  # 512
 
         ciphertext = Salsa20(key, iv).encrypt(data)
 
-        printlong('  key:',  key,  64, 14)
-        printlong('  iv:',   iv,   64, 14)
+        printlong('  key:', key, 64, 14)
+        printlong('  iv:', iv, 64, 14)
         printlong('  data:', data, 64, 14)
         printlong('  ciphertext:', ciphertext, 64, 14)
 
-
     if 0:
-        print '-'*40
+        print '-' * 40
         '''
                      key = 80000000000000000000000000000000
                       IV = 0000000000000000
@@ -338,22 +336,21 @@ def test():
                            8C6713EC66C51881111593CCB3E8CB8F
                            8DE124080501EEEB389C4BCB6977CF95
         '''
-        key  = ('80000000000000000000000000000000').decode('hex')
-        iv   = ('0000000000000000').decode('hex')
-        data = ('00'*256).decode('hex')      # 512
+        key = ('80000000000000000000000000000000').decode('hex')
+        iv = ('0000000000000000').decode('hex')
+        data = ('00' * 256).decode('hex')  # 512
 
         s20 = Salsa20(key, iv)
-        ciphertext  = s20.encrypt(data[:128])
+        ciphertext = s20.encrypt(data[:128])
         ciphertext += s20.encrypt(data[128:])
 
-        printlong('  key:',  key,  64, 14)
-        printlong('  iv:',   iv,   64, 14)
+        printlong('  key:', key, 64, 14)
+        printlong('  iv:', iv, 64, 14)
         printlong('  data:', data, 64, 14)
         printlong('  ciphertext:', ciphertext, 64, 14)
 
-
     if 0:
-        print '-'*40
+        print '-' * 40
         '''
                      key = 80000000000000000000000000000000
                            00000000000000000000000000000000
@@ -379,31 +376,28 @@ def test():
                            3DB3E8D7065AF375A225A70951C8AB74
                            4EC4D595E85225F08E2BC03FE1C42567
         '''
-        key  = ('80000000000000000000000000000000' +
-                '00000000000000000000000000000000'
-               ).decode('hex')
-        iv   = ('0000000000000000').decode('hex')
-        data = ('00'*64).decode('hex')      # 512
+        key = ('80000000000000000000000000000000' +
+               '00000000000000000000000000000000').decode('hex')
+        iv = ('0000000000000000').decode('hex')
+        data = ('00' * 64).decode('hex')  # 512
 
         ciphertext = Salsa20(key, iv).encrypt(data)
 
-        printlong('  key:',  key,  64, 14)
-        printlong('  iv:',   iv,   64, 14)
+        printlong('  key:', key, 64, 14)
+        printlong('  iv:', iv, 64, 14)
         printlong('  data:', data, 64, 14)
         printlong('  ciphertext:', ciphertext, 64, 14)
 
-
-    if 1:       # caution!!!  this takes time on large data
-        print '-'*40
+    if 1:  # caution!!!  this takes time on large data
+        print '-' * 40
         print 'timing test'
         import time
 
-        key  = ('80000000000000000000000000000000' +
-                '00000000000000000000000000000000'
-               ).decode('hex')
-        iv   = ('0000000000000000').decode('hex')
+        key = ('80000000000000000000000000000000' +
+               '00000000000000000000000000000000').decode('hex')
+        iv = ('0000000000000000').decode('hex')
         datalen = 1024
-        data = ('00'*datalen).decode('hex')
+        data = ('00' * datalen).decode('hex')
         iter = 100
 
         t0 = time.time()
@@ -416,11 +410,11 @@ def test():
         tmpl2 = 'each over %d iterations: %6.4f secs,'
         tmpl3 = 'or about %dKB per sec'
         print tmpl1 % (datalen),
-        print tmpl2 % (iter, t1-t0),
-        print tmpl3 % ((datalen*iter) / ((t1-t0)*1000))
+        print tmpl2 % (iter, t1 - t0),
+        print tmpl3 % ((datalen * iter) / ((t1 - t0) * 1000))
 
+    print '-' * 40
 
-    print '-'*40
 
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
@@ -431,4 +425,3 @@ if __name__ == '__main__':
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
-

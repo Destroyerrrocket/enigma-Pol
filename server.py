@@ -12,14 +12,13 @@ import os
 import sys
 import json
 import random
-from pprint import pprint # debug purposes
+from pprint import pprint
 from bash import Bash
 
+
 class MyTCPHandler(socketserver.BaseRequestHandler):
-
-
     def handle(self):
-        # self.request is the TCP socket connected to the client
+        #self.request is the TCP socket connected to the client
         self.data = self.recvall()
         #self.data = str(self.data)
         print("{} recv: ".format(self.client_address[0]) + self.data.decode())
@@ -30,11 +29,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
             try:
                 deencrypted = bash.decrypt_message(bytedmessage.decode())
                 message = json.loads(deencrypted.data.decode())
-                # no imprimirem la informació sensitiva a la consola
                 #print("decrypted: " + deencrypted.data.decode())
             except Exception as errorDecrypting:
                 print("Not decrypting due to: " + str(errorDecrypting))
-                message = json.loads(bytedmessage.decode())
+                try:
+                    message = json.loads(bytedmessage.decode())
+                except:
+                    return
             self.client_fp = message["fp"]
             if message["type"] == "get_id_from_pool":
                 self.send_back_one(self.get_id_from_pool(), "id")
@@ -42,14 +43,17 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 if message["pwd"] == PWD_SERVER:
                     self.send_back_all(message["client_action_size"])
                 else:
-                    self.send_back_one(actions[0]["message"], actions[0]["type"])
+                    self.send_back_one(actions[0]["message"],
+                                       actions[0]["type"])
             elif message["type"] == "personadd":
+                print(message["pwd"])
                 if message["pwd"] == PWD_SERVER:
                     bash.import_key(message["message"])
                     message["message"] = "DELETED FOR SAFETY"
                     actions.append(message)
                     user_data = self.get_user_data(message)
-                    self.send_back_all(message["client_action_size"], user_data=user_data)
+                    self.send_back_all(
+                        message["client_action_size"], user_data=user_data)
                 else:
                     message["message"] = "DELETED FOR SAFETY"
                     self.send_back_one("Contrasenya incorrecta", "message")
@@ -57,18 +61,20 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 if message["pwd"] == PWD_SERVER:
                     actions.append(message)
                     user_data = self.get_user_data(message)
-                    self.send_back_all(message["client_action_size"], user_data=user_data)
+                    self.send_back_all(
+                        message["client_action_size"], user_data=user_data)
                 else:
                     actions.append(message)
                     self.send_back_one("Has dit: " + message["message"])
             elif message["pwd"] == PWD_SERVER:
                 actions.append(message)
                 user_data = self.get_user_data(message)
-                self.send_back_all(message["client_action_size"], user_data=user_data)
+                self.send_back_all(
+                    message["client_action_size"], user_data=user_data)
             else:
                 pass
 
-    def send_back_one(self, message="", type_message="message", extra = {}):
+    def send_back_one(self, message="", type_message="message", extra={}):
         encapsulated = {}
         encapsulated["all"] = []
         our_data = {
@@ -85,18 +91,19 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
         encapsulated["all"].append(our_data)
         if self.client_fp in bash.get_list_pukeys_fingerprint():
-            not_yet_bited_our_data = str(bash.encrypt_message(json.dumps(encapsulated, indent=4), self.client_fp))
+            not_yet_bited_our_data = str(
+                bash.encrypt_message(
+                    json.dumps(encapsulated, indent=4), self.client_fp))
         else:
             not_yet_bited_our_data = json.dumps(encapsulated, indent=4)
         bited_our_data = not_yet_bited_our_data.encode()
         print("send: " + bited_our_data.decode())
         self.request.sendall(bited_our_data)
 
-
     def send_back_all(self, index=0, user_data={}):
         encapsulated = {}
         encapsulated["all"] = []
-        # print("comencem a: " + str(index))
+        #print("comencem a: " + str(index))
 
         for i in range(0, len(actions)):
             people = actions[i]["to"]
@@ -105,24 +112,20 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 if people == "all" or people == user_data["id"]:
                     encapsulated["all"].append(actions[i])
 
-            #if user_not_intended_to_see_this:
-            #    encapsulated["all"].pop(i)
-
         if self.client_fp in bash.get_list_pukeys_fingerprint():
-            not_yet_bited_our_data = str(bash.encrypt_message(json.dumps(encapsulated, indent=4), self.client_fp))
+            not_yet_bited_our_data = str(
+                bash.encrypt_message(
+                    json.dumps(encapsulated, indent=4), self.client_fp))
         else:
             not_yet_bited_our_data = json.dumps(encapsulated, indent=4)
         bited_our_data = not_yet_bited_our_data.encode()
         print("send: " + bited_our_data.decode())
         self.request.sendall(bited_our_data)
 
-
-    def get_user_data (self, message):
-        user_data = {
-            "id": message["id"],
-            "name": message["name"]
-        }
+    def get_user_data(self, message):
+        user_data = {"id": message["id"], "name": message["name"]}
         return user_data
+
     def list_of_people(self):
         list_of_peoples_name = []
         for action in actions:
@@ -131,7 +134,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
             if action["type"] == "personrem":
                 list_of_peoples_name.pop(action["id_p"])
 
-        print (list_of_peoples_name)
+        print(list_of_peoples_name)
         return list_of_peoples_name
 
     def get_id_from_pool(self):
@@ -148,9 +151,9 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
             part = self.request.recv(BUFF_SIZE)
             data += part
             if len(part) < BUFF_SIZE:
-                # either 0 or end of data
                 break
         return data
+
 
 if __name__ == "__main__":
     global bash, people, lstmsgid, our_fp
@@ -169,7 +172,7 @@ if __name__ == "__main__":
     actions.append({
         "type": "server_key",
         "message": our_public_key,
-        "id": 0, # el servidor serà l'usuari 0
+        "id": 0,
         "name": bash.current_name(),
         "to": "all",
         "fp": bash.load_data("personal private key")
@@ -185,8 +188,6 @@ if __name__ == "__main__":
 
     try:
         with socketserver.TCPServer((IP, PORT), MyTCPHandler) as server:
-            # Activate the server; this will keep running until you
-            # interrupt the program with Ctrl-C
             print("running on " + str(server.server_address))
             server.serve_forever()
     except KeyboardInterrupt:

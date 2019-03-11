@@ -5,9 +5,9 @@ from threading import Thread
 import json
 from bash import Bash
 
-class Client(object):
 
-    def __init__(self, ip, port, pwd = "", bash = Bash(), extra = []):
+class Client(object):
+    def __init__(self, ip, port, pwd="", bash=Bash(), extra=[]):
         self.State = "Conectat"
         self.error = ""
         self.lastsent = ""
@@ -35,7 +35,8 @@ class Client(object):
         self.client.close()
 
     def connect_to_server(self):
-        self.client = custom_socket.c_socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+        self.client = custom_socket.c_socket(
+            family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.client.settimeout(30)
         try:
             self.server = self.client.connect((self.ip, self.port))
@@ -59,7 +60,12 @@ class Client(object):
                 jsoning = deencrypted.data.decode()
                 unbitedmsg = json.loads(jsoning)
             except:
-                unbitedmsg = json.loads(msg.decode())
+                try:
+                    unbitedmsg = json.loads(msg.decode())
+                except:
+                    unbitedmsg = {}
+                    unbitedmsg["all"] = []
+                    return unbitedmsg
         elif self.error != "":
             unbitedmsg = {}
             unbitedmsg["all"] = []
@@ -67,11 +73,10 @@ class Client(object):
         if unbitedmsg is '':
             unbitedmsg = {}
             unbitedmsg["all"] = []
-            unbitedmsg["all"].append({"type": "error", "message": "Server seems like it failed. Unexpected action? error: " + self.error})
+            #unbitedmsg["all"].append({"type": "error", "message": "Server seems like it failed. Unexpected action? error: " + self.error})
         return unbitedmsg
 
     def process_incoming_data(self, message):
-        #previous_last_entry = len(self.actions)
         for answer_entry in message["all"]:
             self.actions.append(answer_entry)
             if answer_entry["type"] == "personadd":
@@ -83,7 +88,8 @@ class Client(object):
                         self.people.pop(i)
                 self.people.pop(0)
             elif answer_entry["type"] == "message":
-                self.print_data("[" + answer_entry["name"] + "]: " + answer_entry["message"])
+                self.print_data("[" + answer_entry["name"] + "]: " +
+                                answer_entry["message"])
             elif answer_entry["type"] == "server_key":
                 self.bash.import_key(answer_entry["message"])
                 self.server_fp = answer_entry["fp"]
@@ -94,27 +100,29 @@ class Client(object):
         # line for debugging
         # self.print_data(message=str(json.dumps(message, indent=4)))
 
-
-    def send_message(self, message="", type_message="message", to="", extra={}):
+    def send_message(self, message="", type_message="message", to="",
+                     extra={}):
         if type_message == "message":
             self.lastsent = message
 
         our_data = {
-            "type"              : type_message,
-            "message"           : message,
-            "id"                : self.id,
-            "name"              : self.bash.current_name(),
-            "to"                : "all",
+            "type": type_message,
+            "message": message,
+            "id": self.id,
+            "name": self.bash.current_name(),
+            "to": "all",
             "client_action_size": len(self.actions),
-            "fp"                : self.bash.load_data("personal private key"),
-            "pwd"               : ""
+            "fp": self.bash.load_data("personal private key"),
+            "pwd": ""
         }
         arrextra = self.bash.dict_to_array(extra)
         for ext in arrextra:
             our_data[ext[0]] = ext[1]
         if self.server_fp != "":
             our_data["pwd"] = self.pwd
-            bited_our_data = str(self.bash.encrypt_message(json.dumps(our_data, indent=4), self.server_fp)).encode()
+            bited_our_data = str(
+                self.bash.encrypt_message(
+                    json.dumps(our_data, indent=4), self.server_fp)).encode()
         else:
             bited_our_data = json.dumps(our_data, indent=4).encode()
 
@@ -123,7 +131,6 @@ class Client(object):
             self.client.sendall(bited_our_data)
         except Exception as e:
             self.error = str(e)
-
 
     def checkstatus(self):
         if (self.State != "Conectat"):
@@ -135,7 +142,8 @@ class Client(object):
     def first_connection(self):
         self.get_actions()
         self.ask_for_id()
-        our_public_key = self.bash.export_key(self.bash.load_data("personal private key"))
+        our_public_key = self.bash.export_key(
+            self.bash.load_data("personal private key"))
         self.send_message(message=our_public_key, type_message="personadd")
         answer = self.recieve_message()
         self.process_incoming_data(answer)
@@ -149,6 +157,7 @@ class Client(object):
         self.send_message(type_message="get_id_from_pool")
         answer = self.recieve_message()
         self.process_incoming_data(answer)
+
 
 """
     __recieve_message = recieve_message
